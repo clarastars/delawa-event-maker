@@ -1,0 +1,109 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Montserrat', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-arabic: 'Cairo', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --color-delawa-primary: #7d4651;
+    --color-delawa-primary-dark: #4e2e36;
+    --color-delawa-primary-hover: #6a3a44;
+    --color-delawa-accent: #ffd700;
+}
+
+html[dir='rtl'] body {
+    font-family: var(--font-arabic);
+    font-weight: 300;
+    font-synthesis: none;
+}
+
+html[dir='rtl'] h1 {
+    font-weight: 700;
+}
+
+html[dir='rtl'] :is(.font-bold, .font-black, .font-semibold):not(h1) {
+    font-weight: 500;
+}
+
+/* Accept page — intl-tel-input */
+#phone-field .iti {
+    display: block;
+    width: 100%;
+}
+
+#phone-field .iti__tel-input {
+    width: 100%;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    background-color: #fff;
+    padding: 0.75rem 1rem;
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+    outline: none;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+#phone-field .iti__tel-input:focus {
+    border-color: #7d4651;
+    box-shadow: 0 0 0 4px rgb(125 70 81 / 0.2);
+}
+
+#phone-field .iti--separate-dial-code .iti__selected-country {
+    border-radius: 1rem 0 0 1rem;
+    background-color: #fff;
+    border: 1px solid #e2e8f0;
+    border-inline-end: 0;
+}
+
+#phone-field .iti--separate-dial-code .iti__tel-input {
+    border-radius: 0 1rem 1rem 0;
+    border-inline-start: 0;
+}
+
+#phone-field .iti--separate-dial-code .iti__selected-country:focus-within {
+    border-color: #7d4651;
+}
+
+#phone-field .iti--separate-dial-code.iti--focus .iti__selected-country,
+#phone-field .iti--separate-dial-code.iti--focus .iti__tel-input {
+    border-color: #7d4651;
+}
+
+#phone-field .iti--separate-dial-code.iti--focus .iti__tel-input {
+    box-shadow: 0 0 0 4px rgb(125 70 81 / 0.2);
+}
+
+/* Country dropdown always LTR (even on Arabic pages) */
+#phone-field .iti__dropdown-content {
+    direction: ltr;
+    text-align: left;
+}
+
+html[dir='rtl'] #phone-field .iti__dropdown-content .iti__country-list .iti__flag,
+html[dir='rtl'] #phone-field .iti__dropdown-content .iti__country-list .iti__country-name {
+    margin-right: var(--iti-spacer-horizontal, 8px);
+    margin-left: 0;
+}
+
+html[dir='rtl'] #phone-field .iti__dropdown-content .iti__search-input {
+    padding-left: 30px;
+    padding-right: 28px;
+    background-position: left 8px center;
+}
+
+html[dir='rtl'] #phone-field .iti__dropdown-content .iti__search-icon {
+    left: 8px;
+    right: auto;
+}
+
+html[dir='rtl'] #phone-field .iti__dropdown-content .iti__search-clear {
+    right: 4px;
+    left: auto;
+}

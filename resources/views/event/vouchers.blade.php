@@ -1,0 +1,107 @@
+@php
+    $copy = [
+        'en' => [
+            'title' => 'Your coupons',
+            'greeting' => 'Welcome, :name.',
+            'greeting_guest' => 'Welcome.',
+            'intro_one' => 'Here is your coupon for :event.',
+            'intro_many' => 'Here are your :count coupons for :event.',
+            'remaining_balance' => 'Remaining balance',
+            'balance' => 'Balance',
+            'currency' => 'SAR',
+            'expires' => 'Expires',
+            'one_time' => 'One-time use',
+        ],
+        'ar' => [
+            'title' => 'قسائمك',
+            'greeting' => 'أهلاً :name.',
+            'greeting_guest' => 'أهلاً بك.',
+            'intro_one' => 'هذه قسيمتك لـ :event.',
+            'intro_many' => 'هذه قسائمك (:count) لـ :event.',
+            'remaining_balance' => 'الرصيد المتبقي',
+            'balance' => 'الرصيد',
+            'currency' => 'ريال',
+            'expires' => 'تنتهي في',
+            'one_time' => 'استخدام لمرة واحدة',
+        ],
+    ][$locale];
+
+    $dir = $locale === 'ar' ? 'rtl' : 'ltr';
+
+    $greeting = filled($contact->name)
+        ? str_replace(':name', $contact->name, $copy['greeting'])
+        : $copy['greeting_guest'];
+
+    $intro = $vouchers->count() === 1
+        ? str_replace(':event', $event->name, $copy['intro_one'])
+        : str_replace([':count', ':event'], [(string) $vouchers->count(), $event->name], $copy['intro_many']);
+@endphp
+
+<!DOCTYPE html>
+<html lang="{{ $locale }}" dir="{{ $dir }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{{ $copy['title'] }} - {{ $event->name }} - Delawa</title>
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon_16x16.png') }}">
+        @fonts
+        @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+            @vite(['resources/css/app.css', 'resources/js/event-vouchers.js'])
+        @endif
+    </head>
+    <body class="min-h-screen bg-[#7D4651] text-slate-950 antialiased">
+        <main class="mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center justify-center px-6 py-10">
+            <div class="w-full max-w-lg">
+                <header class="mb-8 text-center text-white">
+                    <h1 class="text-2xl font-black">{{ $greeting }}</h1>
+                    <p class="mt-2 text-sm font-medium text-white/90">{{ $intro }}</p>
+                </header>
+
+                @if ($event->bannerUrl())
+                    <div class="mb-8 overflow-hidden rounded-[2rem] bg-white shadow-2xl shadow-slate-900/25 ring-1 ring-white/60">
+                        <img
+                            src="{{ $event->bannerUrl() }}"
+                            alt="{{ $event->name }}"
+                            class="block h-auto w-full"
+                        >
+                    </div>
+                @endif
+
+                <div class="space-y-6">
+                    @foreach ($vouchers as $voucher)
+                        <div class="w-full overflow-hidden rounded-[2rem] bg-white shadow-2xl shadow-slate-900/25 ring-1 ring-white/60">
+                            <div class="px-6 py-6 text-center">
+                                <svg data-voucher-barcode="{{ $voucher->voucher_id }}" class="mx-auto h-12 w-full max-w-[14rem]" aria-hidden="true"></svg>
+                                <p class="mt-2 font-mono text-sm font-semibold tracking-wide text-slate-950" dir="ltr">{{ $voucher->voucher_id }}</p>
+
+                                @if ($remainingBalances[$voucher->id] !== null)
+                                    <p class="mt-4 text-base font-bold text-[#4E2E36]">
+                                        {{ $copy['remaining_balance'] }}:
+                                        <span dir="ltr">{{ number_format($remainingBalances[$voucher->id], 2) }}</span>
+                                        {{ $copy['currency'] }}
+                                    </p>
+                                @else
+                                    <p class="mt-4 text-base font-bold text-[#4E2E36]">
+                                        {{ $copy['balance'] }}:
+                                        <span dir="ltr">{{ number_format((float) $voucher->balance, 2) }}</span>
+                                        {{ $copy['currency'] }}
+                                    </p>
+                                @endif
+
+                                @if ($voucher->expiry_date)
+                                    <p class="mt-2 text-xs font-semibold text-slate-500">
+                                        {{ $copy['expires'] }}: <span dir="ltr">{{ $voucher->expiry_date->format('Y-m-d') }}</span>
+                                    </p>
+                                @endif
+
+                                @if ($voucher->one_time_redemption)
+                                    <p class="mt-3 text-xs font-semibold text-[#4E2E36]">{{ $copy['one_time'] }}</p>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </main>
+    </body>
+</html>
