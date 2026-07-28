@@ -1,4 +1,36 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-codebase-index"]
+  "model": "google-vertex/gemini-3.1-pro-preview",
+  "plugin": ["opencode-codebase-index"],
+  "instructions": [
+    "AGENTS.md"
+  ],
+  "mcp": {
+    "laravel-boost": {
+      "type": "local",
+      "command": ["php", "artisan", "boost:mcp"],
+      "enabled": true
+    }
+  },
+  "provider": {
+    "google-vertex": {
+      "name": "Google Vertex AI",
+      "options": {
+        "project": "gam-project-iq9y6",
+        "location": "global"
+      }
+    },
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      },
+      "models": {
+        "nomic-embed-text": {
+          "name": "nomic-embed-text"
+        }
+      }
+    }
+  }
 }
