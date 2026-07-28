@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\Tsepass\GiftCardBalance;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -38,6 +39,30 @@ test('remaining balance returns null when api is not configured', function () {
 
     expect($balance)->toBeNull();
     Http::assertNothingSent();
+});
+
+test('remaining balance includes legal_entity in request query', function () {
+    config([
+        'services.tsepass.api_url' => 'https://api.tsepass.test',
+        'services.tsepass.api_key' => 'secret',
+        'services.tsepass.legal_entity' => 'adv_test',
+    ]);
+
+    Http::fake([
+        'https://api.tsepass.test/queries/gift-card-simple*' => Http::response([
+            'success' => true,
+            'data' => [
+                ['originalAmount' => 400, 'netCardValue' => 400],
+            ],
+        ]),
+    ]);
+
+    app(GiftCardBalance::class)->remainingBalance('EG-SA-100');
+
+    Http::assertSent(function (Request $request) {
+        return $request['cardNumber'] === 'EG-SA-100' &&
+            $request['legal_entity'] === 'adv_test';
+    });
 });
 
 test('remaining balance returns null when api request fails', function () {

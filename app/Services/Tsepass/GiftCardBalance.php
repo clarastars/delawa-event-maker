@@ -25,6 +25,7 @@ class GiftCardBalance implements GiftCardBalanceContract
             ->connectTimeout(5)
             ->get($this->url('/queries/gift-card-simple'), [
                 'cardNumber' => $cardNumber,
+                'legal_entity' => config('services.tsepass.legal_entity'),
             ]);
 
         if ($response->failed()) {

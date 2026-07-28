@@ -46,6 +46,7 @@ return [
     'tsepass' => [
         'api_key' => env('TSEPASS_API_KEY'),
         'api_url' => env('TSEPASS_API_URL'),
+        'legal_entity' => env('TSEPASS_LEGAL_ENTITY', 'adv'),
     ],
 
 ];
