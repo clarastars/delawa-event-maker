@@ -66,6 +66,16 @@
                     }
                 }, 0);
             });
+
+            window.addEventListener('pageshow', function (event) {
+                if (event.persisted) {
+                    const overlay = document.getElementById('loading-overlay');
+                    if (overlay) {
+                        overlay.classList.add('hidden');
+                        overlay.classList.remove('flex');
+                    }
+                }
+            });
         </script>
     </head>
     <body class="min-h-screen bg-[#7D4651] text-slate-950 antialiased">
@@ -81,12 +91,23 @@
                 </header>
 
                 @if ($event->bannerUrl())
-                    <div class="mb-8 overflow-hidden rounded-[2rem] bg-white shadow-2xl shadow-slate-900/25 ring-1 ring-white/60">
+                    <div class="mb-4 overflow-hidden rounded-[2rem] bg-white shadow-2xl shadow-slate-900/25 ring-1 ring-white/60">
                         <img
                             src="{{ $event->bannerUrl() }}"
                             alt="{{ $event->name }}"
                             class="block h-auto w-full"
                         >
+                    </div>
+                @endif
+                
+                @if ($event->maps_link)
+                    <div class="mb-8 text-center">
+                        <a href="{{ $event->maps_link }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm font-bold text-white ring-1 ring-white/20 transition hover:bg-white/20">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                                <path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                            </svg>
+                            {{ $event->maps_link_label ?: ($locale === 'ar' ? 'اذهب إلى الموقع' : 'Go to location') }}
+                        </a>
                     </div>
                 @endif
                 

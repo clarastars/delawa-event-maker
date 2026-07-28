@@ -92,6 +92,16 @@
                     }
                 }, 0);
             });
+
+            window.addEventListener('pageshow', function (event) {
+                if (event.persisted) {
+                    const overlay = document.getElementById('loading-overlay');
+                    if (overlay) {
+                        overlay.classList.add('hidden');
+                        overlay.classList.remove('flex');
+                    }
+                }
+            });
         </script>
     </head>
     <body class="min-h-screen bg-[#7D4651] text-slate-950 antialiased">
