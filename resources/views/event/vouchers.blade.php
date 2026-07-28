@@ -147,9 +147,9 @@
                             @foreach($products as $product)
                                 <div class="overflow-hidden rounded-2xl bg-white shadow-xl">
                                     @if ($product->image_path)
-                                        <img src="{{ Storage::disk('public')->url($product->image_path) }}" alt="{{ $product->name }}" class="h-48 w-full object-cover">
+                                        <img src="{{ Storage::disk('public')->url($product->image_path) }}" alt="{{ $product->name }}" class="h-64 w-full object-cover">
                                     @else
-                                        <div class="h-48 w-full bg-slate-100 flex items-center justify-center">
+                                        <div class="h-64 w-full bg-slate-100 flex items-center justify-center">
                                             <span class="text-slate-400">No Image</span>
                                         </div>
                                     @endif
