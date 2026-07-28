@@ -22,6 +22,8 @@ class StoreContactRequest extends FormRequest
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['required', 'string', 'max:30'],
             'event_id' => ['nullable', 'integer', 'exists:events,id'],
+            'assignment_type' => ['nullable', 'string', 'in:entries,auto_assign'],
+            'entries' => ['nullable', 'integer', 'min:1'],
         ];
     }
 }

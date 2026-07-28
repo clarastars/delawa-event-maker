@@ -45,19 +45,9 @@ test('creating a voucher requires an event', function () {
         ->assertSessionHasErrors('event_id');
 });
 
-test('admin can upload contacts and assign vouchers from a chosen event', function () {
+test('admin can upload contacts and grant them entries for an event', function () {
     $admin = User::factory()->create();
     $event = Event::factory()->create();
-
-    Voucher::create([
-        'event_id' => $event->id,
-        'voucher_id' => 'EG-SA-001',
-        'creation_date' => now()->toDateString(),
-        'expiry_date' => now()->addMonth()->toDateString(),
-        'balance' => 150,
-        'status' => Voucher::STATUS_ACTIVE,
-        'one_time_redemption' => true,
-    ]);
 
     $file = UploadedFile::fake()->createWithContent(
         'contacts.csv',
@@ -68,6 +58,7 @@ test('admin can upload contacts and assign vouchers from a chosen event', functi
         ->post(route('admin.contacts.upload.store'), [
             'contacts' => $file,
             'event_id' => $event->id,
+            'entries' => 2,
         ])
         ->assertRedirect(route('admin.contacts.index'));
 
@@ -75,24 +66,16 @@ test('admin can upload contacts and assign vouchers from a chosen event', functi
 
     expect($contact)->not->toBeNull();
 
-    $this->assertDatabaseHas('vouchers', [
-        'voucher_id' => 'EG-SA-001',
+    $this->assertDatabaseHas('contact_event', [
         'contact_id' => $contact->id,
+        'event_id' => $event->id,
+        'entries' => 2,
     ]);
 });
 
-test('admin can upload contacts without assigning vouchers', function () {
+test('admin can upload contacts without assigning event access', function () {
     $admin = User::factory()->create();
     $event = Event::factory()->create();
-
-    Voucher::create([
-        'event_id' => $event->id,
-        'voucher_id' => 'EG-SA-001',
-        'creation_date' => now()->toDateString(),
-        'balance' => 150,
-        'status' => Voucher::STATUS_ACTIVE,
-        'one_time_redemption' => true,
-    ]);
 
     $file = UploadedFile::fake()->createWithContent(
         'contacts.csv',
@@ -109,25 +92,14 @@ test('admin can upload contacts without assigning vouchers', function () {
 
     expect($contact)->not->toBeNull();
 
-    $this->assertDatabaseHas('vouchers', [
-        'voucher_id' => 'EG-SA-001',
-        'contact_id' => null,
+    $this->assertDatabaseMissing('contact_event', [
+        'contact_id' => $contact->id,
     ]);
 });
 
-test('admin can add a contact via form and assign a voucher from an event', function () {
+test('admin can add a contact via form and grant them entries for an event', function () {
     $admin = User::factory()->create();
     $event = Event::factory()->create();
-
-    Voucher::create([
-        'event_id' => $event->id,
-        'voucher_id' => 'EG-SA-002',
-        'creation_date' => now()->toDateString(),
-        'expiry_date' => now()->addMonth()->toDateString(),
-        'balance' => 200,
-        'status' => Voucher::STATUS_ACTIVE,
-        'one_time_redemption' => true,
-    ]);
 
     $this->actingAs($admin)
         ->post(route('admin.contacts.store'), [
@@ -135,6 +107,7 @@ test('admin can add a contact via form and assign a voucher from an event', func
             'email' => 'ahmed@example.com',
             'phone' => '0559876543',
             'event_id' => $event->id,
+            'entries' => 3,
         ])
         ->assertRedirect(route('admin.contacts.upload.create'))
         ->assertSessionHas('status');
@@ -144,9 +117,10 @@ test('admin can add a contact via form and assign a voucher from an event', func
     expect($contact)->not->toBeNull()
         ->name->toBe('Ahmed');
 
-    $this->assertDatabaseHas('vouchers', [
-        'voucher_id' => 'EG-SA-002',
+    $this->assertDatabaseHas('contact_event', [
         'contact_id' => $contact->id,
+        'event_id' => $event->id,
+        'entries' => 3,
     ]);
 });
 

@@ -8,11 +8,13 @@ use App\Http\Requests\SendAcceptOtpRequest;
 use App\Http\Requests\VerifyAcceptOtpRequest;
 use App\Models\Contact;
 use App\Models\Event;
+use App\Models\Product;
 use App\Models\Voucher;
 use App\Support\PhoneNumber;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use RuntimeException;
 
@@ -33,7 +35,9 @@ class EventInviteController extends Controller
             PhoneNumber::toE164($request->string('phone')->toString()) ?? ''
         );
 
-        if (! $contact || $this->redeemableVouchers($contact, $event)->isEmpty()) {
+        $hasEntries = $contact ? $contact->events()->where('event_id', $event->id)->exists() : false;
+
+        if (! $contact || (! $hasEntries && $this->redeemableVouchers($contact, $event)->isEmpty())) {
             return $this->view($request, $event, [
                 'step' => 'details',
                 'searched' => true,
@@ -92,7 +96,16 @@ class EventInviteController extends Controller
 
         session()->forget($this->pendingKey($event));
 
-        if (! $contact || $this->redeemableVouchers($contact, $event)->isEmpty()) {
+        if (! $contact) {
+            return $this->view($request, $event, [
+                'step' => 'details',
+                'searched' => true,
+            ]);
+        }
+
+        $hasEntries = $contact->events()->where('event_id', $event->id)->exists();
+
+        if (! $hasEntries && $this->redeemableVouchers($contact, $event)->isEmpty()) {
             return $this->view($request, $event, [
                 'step' => 'details',
                 'searched' => true,
@@ -111,8 +124,9 @@ class EventInviteController extends Controller
         $contact = filled($contactId) ? Contact::query()->find((int) $contactId) : null;
 
         $vouchers = $contact ? $this->redeemableVouchers($contact, $event) : collect();
+        $hasEntries = $contact ? $contact->events()->where('event_id', $event->id)->exists() : false;
 
-        if (! $contact || $vouchers->isEmpty()) {
+        if (! $contact || (! $hasEntries && $vouchers->isEmpty())) {
             session()->forget($this->verifiedKey($event));
 
             return redirect()->route('event.invite', ['event' => $event, 'lang' => $this->locale($request)]);
@@ -120,15 +134,94 @@ class EventInviteController extends Controller
 
         $contact->markAsActivated();
 
+        $entriesAllowed = 0;
+        $pivot = $contact->events()->where('event_id', $event->id)->first()?->pivot;
+        if ($pivot) {
+            $entriesAllowed = $pivot->entries;
+        }
+
+        $remainingEntries = max(0, $entriesAllowed - $vouchers->count());
+
+        $products = collect();
+        if ($remainingEntries > 0) {
+            $products = $event->products;
+        }
+
         return view('event.vouchers', [
             'locale' => $this->locale($request),
             'event' => $event,
             'contact' => $contact,
             'vouchers' => $vouchers,
+            'remainingEntries' => $remainingEntries,
+            'products' => $products,
             'remainingBalances' => $vouchers->mapWithKeys(fn ($voucher) => [
                 $voucher->id => $giftCardBalance->remainingBalance($voucher->voucher_id),
             ]),
         ]);
+    }
+
+    public function claimProduct(Request $request, Event $event, Product $product): RedirectResponse
+    {
+        $contactId = session($this->verifiedKey($event));
+        $contact = filled($contactId) ? Contact::query()->find((int) $contactId) : null;
+
+        if (! $contact) {
+            session()->forget($this->verifiedKey($event));
+
+            return redirect()->route('event.invite', ['event' => $event, 'lang' => $this->locale($request)]);
+        }
+
+        $vouchers = $this->redeemableVouchers($contact, $event);
+
+        $entriesAllowed = 0;
+        $pivot = $contact->events()->where('event_id', $event->id)->first()?->pivot;
+        if ($pivot) {
+            $entriesAllowed = $pivot->entries;
+        }
+
+        $remainingEntries = max(0, $entriesAllowed - $vouchers->count());
+
+        if ($remainingEntries <= 0) {
+            return redirect()->route('event.vouchers', ['event' => $event, 'lang' => $this->locale($request)])
+                ->withErrors(['product' => $this->message($request, [
+                    'en' => 'You have already claimed all your allowed vouchers.',
+                    'ar' => 'لقد قمت بالمطالبة بجميع قسائمك المسموح بها.',
+                ])]);
+        }
+
+        if ($product->event_id !== $event->id) {
+            return redirect()->route('event.vouchers', ['event' => $event, 'lang' => $this->locale($request)])
+                ->withErrors(['product' => $this->message($request, [
+                    'en' => 'Invalid product selected.',
+                    'ar' => 'المنتج المحدد غير صالح.',
+                ])]);
+        }
+
+        $voucher = DB::transaction(function () use ($contact, $product) {
+            $voucher = Voucher::query()
+                ->whereNull('contact_id')
+                ->where('status', Voucher::STATUS_ACTIVE)
+                ->where('product_id', $product->id)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->first();
+
+            if ($voucher) {
+                $voucher->update(['contact_id' => $contact->id]);
+            }
+
+            return $voucher;
+        });
+
+        if (! $voucher) {
+            return redirect()->route('event.vouchers', ['event' => $event, 'lang' => $this->locale($request)])
+                ->withErrors(['product' => $this->message($request, [
+                    'en' => 'No vouchers available for this product.',
+                    'ar' => 'لا توجد قسائم متاحة لهذا المنتج.',
+                ])]);
+        }
+
+        return redirect()->route('event.vouchers', ['event' => $event, 'lang' => $this->locale($request)]);
     }
 
     public function resendOtp(Request $request, Event $event, Otp $otp): RedirectResponse

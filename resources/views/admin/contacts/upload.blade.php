@@ -37,17 +37,36 @@
                         @enderror
                     </div>
 
-                    <div>
-                        <label for="event_id" class="block text-sm font-semibold text-slate-700">Assign a coupon from event (optional)</label>
-                        <select id="event_id" name="event_id" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20">
-                            <option value="">No coupon assignment</option>
-                            @foreach ($events as $event)
-                                <option value="{{ $event->id }}" @selected(old('event_id') == $event->id)>{{ $event->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('event_id')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                    <div x-data="{ eventId: '{{ old('event_id') }}', assignmentType: '{{ old('assignment_type', 'entries') }}' }">
+                        <div>
+                            <label for="event_id" class="block text-sm font-semibold text-slate-700">Assign event access (optional)</label>
+                            <select id="event_id" name="event_id" x-model="eventId" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20">
+                                <option value="">No event assignment</option>
+                                @foreach ($events as $event)
+                                    <option value="{{ $event->id }}">{{ $event->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('event_id')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div x-show="eventId" x-cloak class="mt-5">
+                            <label for="assignment_type" class="block text-sm font-semibold text-slate-700">Assignment Type</label>
+                            <select id="assignment_type" name="assignment_type" x-model="assignmentType" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20">
+                                <option value="entries">Allow product selection (Entries)</option>
+                                <option value="auto_assign">Auto-assign a general coupon immediately</option>
+                            </select>
+                        </div>
+
+                        <div x-show="eventId && assignmentType === 'entries'" x-cloak class="mt-5">
+                            <label for="entries" class="block text-sm font-semibold text-slate-700">Entries</label>
+                            <input id="entries" name="entries" type="number" min="1" value="{{ old('entries', 1) }}" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20">
+                            <p class="mt-1 text-xs text-slate-500">How many products this user can pick for the event.</p>
+                            @error('entries')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
 
                     <button class="w-full rounded-2xl bg-[#7D4651] px-6 py-3 font-bold text-white shadow-lg shadow-[#7D4651]/25 hover:bg-[#6A3A44]">
@@ -71,14 +90,29 @@
                         @enderror
                     </div>
 
-                    <div>
-                        <label for="upload_event_id" class="block text-sm font-semibold text-slate-700">Assign coupons from event (optional)</label>
-                        <select id="upload_event_id" name="event_id" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20">
-                            <option value="">No coupon assignment</option>
-                            @foreach ($events as $event)
-                                <option value="{{ $event->id }}">{{ $event->name }}</option>
-                            @endforeach
-                        </select>
+                    <div x-data="{ eventId: '{{ old('event_id') }}', assignmentType: '{{ old('assignment_type', 'entries') }}' }">
+                        <div>
+                            <label for="upload_event_id" class="block text-sm font-semibold text-slate-700">Assign event access (optional)</label>
+                            <select id="upload_event_id" name="event_id" x-model="eventId" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20">
+                                <option value="">No event assignment</option>
+                                @foreach ($events as $event)
+                                    <option value="{{ $event->id }}">{{ $event->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div x-show="eventId" x-cloak class="mt-6">
+                            <label for="upload_assignment_type" class="block text-sm font-semibold text-slate-700">Assignment Type</label>
+                            <select id="upload_assignment_type" name="assignment_type" x-model="assignmentType" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20">
+                                <option value="entries">Allow product selection (Entries)</option>
+                                <option value="auto_assign">Auto-assign a general coupon immediately</option>
+                            </select>
+                        </div>
+
+                        <div x-show="eventId && assignmentType === 'entries'" x-cloak class="mt-6">
+                            <label for="upload_entries" class="block text-sm font-semibold text-slate-700">Entries</label>
+                            <input id="upload_entries" name="entries" type="number" min="1" value="1" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20">
+                        </div>
                     </div>
 
                     <div class="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-slate-200">

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['contact_id', 'event_id', 'voucher_id', 'creation_date', 'expiry_date', 'balance', 'remaining_balance', 'remaining_balance_synced_at', 'status', 'one_time_redemption', 'redeemed_at'])]
+#[Fillable(['contact_id', 'event_id', 'product_id', 'voucher_id', 'creation_date', 'expiry_date', 'balance', 'remaining_balance', 'remaining_balance_synced_at', 'status', 'one_time_redemption', 'redeemed_at'])]
 class Voucher extends Model
 {
     public const STATUS_ACTIVE = 'active';
@@ -46,6 +46,11 @@ class Voucher extends Model
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
     }
 
     public function scopeRedeemable(Builder $query): Builder

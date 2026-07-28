@@ -79,6 +79,7 @@ class EventController extends Controller
 
     public function show(Event $event): View
     {
+        $event->load('products');
         $event->loadCount([
             'vouchers',
             'vouchers as assigned_vouchers_count' => fn ($query) => $query->whereNotNull('contact_id'),

@@ -35,12 +35,14 @@ class ContactUploadController extends Controller
     public function storeForm(StoreContactRequest $request): RedirectResponse
     {
         $event = $this->resolveEvent($request->validated('event_id'));
+        $entries = $request->validated('entries') ? (int) $request->validated('entries') : 1;
+        $autoAssign = $request->validated('assignment_type') === 'auto_assign';
 
         $result = $this->contactImporter->import([
             'name' => $request->string('name')->toString(),
             'email' => $request->string('email')->toString(),
             'phone' => $request->string('phone')->toString(),
-        ], $event);
+        ], $event, $entries, $autoAssign);
 
         if ($event === null) {
             return redirect()
@@ -48,15 +50,21 @@ class ContactUploadController extends Controller
                 ->with('status', 'Contact saved.');
         }
 
-        if ($result['assigned']) {
+        if ($autoAssign) {
+            if ($result['assigned']) {
+                return redirect()
+                    ->route('admin.contacts.upload.create')
+                    ->with('status', "Contact saved and a {$event->name} voucher assigned successfully.");
+            }
+
             return redirect()
                 ->route('admin.contacts.upload.create')
-                ->with('status', "Contact saved and a {$event->name} voucher assigned successfully.");
+                ->with('status', "Contact saved, but no {$event->name} voucher could be assigned (the contact may already have one, or the pool is empty).");
         }
 
         return redirect()
             ->route('admin.contacts.upload.create')
-            ->with('status', "Contact saved, but no {$event->name} voucher could be assigned (the contact may already have one, or the pool is empty).");
+            ->with('status', "Contact saved and assigned {$entries} entries for {$event->name}. They must select their product manually.");
     }
 
     public function store(ContactUploadRequest $request): RedirectResponse
@@ -95,12 +103,18 @@ class ContactUploadController extends Controller
         fclose($handle);
 
         $event = $this->resolveEvent($request->validated('event_id'));
+        $entries = $request->validated('entries') ? (int) $request->validated('entries') : 1;
+        $autoAssign = $request->validated('assignment_type') === 'auto_assign';
 
-        $summary = $this->contactImporter->importMany($rows, $event);
+        $summary = $this->contactImporter->importMany($rows, $event, $entries, $autoAssign);
 
-        $status = $event !== null
-            ? "Imported {$summary['imported']} contacts and assigned {$summary['assigned']} {$event->name} vouchers. Skipped {$summary['skipped']} rows."
-            : "Imported {$summary['imported']} contacts. Skipped {$summary['skipped']} rows.";
+        if ($event !== null) {
+            $status = $autoAssign
+                ? "Imported {$summary['imported']} contacts and assigned {$summary['assigned']} {$event->name} vouchers. Skipped {$summary['skipped']} rows."
+                : "Imported {$summary['imported']} contacts and assigned {$entries} entries for {$event->name}. Skipped {$summary['skipped']} rows.";
+        } else {
+            $status = "Imported {$summary['imported']} contacts. Skipped {$summary['skipped']} rows.";
+        }
 
         return redirect()
             ->route('admin.contacts.index')

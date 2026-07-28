@@ -32,9 +32,9 @@
         ? str_replace(':name', $contact->name, $copy['greeting'])
         : $copy['greeting_guest'];
 
-    $intro = $vouchers->count() === 1
+    $intro = $vouchers->count() > 0 ? ($vouchers->count() === 1
         ? str_replace(':event', $event->name, $copy['intro_one'])
-        : str_replace([':count', ':event'], [(string) $vouchers->count(), $event->name], $copy['intro_many']);
+        : str_replace([':count', ':event'], [(string) $vouchers->count(), $event->name], $copy['intro_many'])) : str_replace(':event', $event->name, $copy['intro_one']);
 @endphp
 
 <!DOCTYPE html>
@@ -64,6 +64,44 @@
                             alt="{{ $event->name }}"
                             class="block h-auto w-full"
                         >
+                    </div>
+                @endif
+                
+                @error('product')
+                    <div class="mb-6 rounded-2xl bg-red-50 p-4 text-sm font-medium text-red-800 ring-1 ring-red-200">
+                        {{ $message }}
+                    </div>
+                @enderror
+
+                @if($remainingEntries > 0 && $products->isNotEmpty())
+                    <div class="mb-8">
+                        <h2 class="mb-4 text-xl font-bold text-white text-center">
+                            {{ $locale === 'ar' ? 'اختر منتجك' : 'Choose your product' }} 
+                            ({{ $remainingEntries }} {{ $locale === 'ar' ? 'متبقي' : 'remaining' }})
+                        </h2>
+                        
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            @foreach($products as $product)
+                                <div class="overflow-hidden rounded-2xl bg-white shadow-xl">
+                                    @if ($product->image_path)
+                                        <img src="{{ Storage::disk('public')->url($product->image_path) }}" alt="{{ $product->name }}" class="h-48 w-full object-cover">
+                                    @else
+                                        <div class="h-48 w-full bg-slate-100 flex items-center justify-center">
+                                            <span class="text-slate-400">No Image</span>
+                                        </div>
+                                    @endif
+                                    <div class="p-4 text-center">
+                                        <h3 class="text-lg font-bold text-slate-900 mb-4">{{ $product->name }}</h3>
+                                        <form method="POST" action="{{ route('event.products.claim', ['event' => $event, 'product' => $product, 'lang' => $locale]) }}">
+                                            @csrf
+                                            <button class="w-full rounded-xl bg-[#7D4651] px-4 py-2 font-bold text-white hover:bg-[#6A3A44]">
+                                                {{ $locale === 'ar' ? 'اختيار' : 'Select' }}
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 @endif
 

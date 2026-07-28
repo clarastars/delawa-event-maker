@@ -20,6 +20,7 @@ class VoucherUploadRequest extends FormRequest
         return [
             'vouchers' => ['required', 'file', 'extensions:csv,txt,tsv', 'max:5120'],
             'event_id' => ['required', 'integer', 'exists:events,id'],
+            'product_id' => ['nullable', 'integer', 'exists:products,id'],
         ];
     }
 }

@@ -48,6 +48,43 @@
         <div class="grid gap-6 md:grid-cols-2">
             <div class="space-y-6">
                 <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+                    <h2 class="text-sm font-bold uppercase tracking-wide text-slate-500">Products</h2>
+                    <p class="mt-2 text-sm text-slate-600">Add products to this event that attendees can pick from.</p>
+                    <div class="mt-4 flex flex-wrap gap-3">
+                        <a href="{{ route('admin.events.products.create', $event) }}" class="rounded-2xl bg-[#7D4651] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#7D4651]/25 hover:bg-[#6A3A44]">
+                            Add product
+                        </a>
+                    </div>
+
+                    @if ($event->products->isNotEmpty())
+                        <div class="mt-6 flex flex-col gap-3">
+                            @foreach ($event->products as $product)
+                                <div class="flex items-center justify-between rounded-xl bg-white p-3 ring-1 ring-slate-200">
+                                    <div class="flex items-center gap-3">
+                                        @if ($product->image_path)
+                                            <img src="{{ Storage::disk('public')->url($product->image_path) }}" class="h-10 w-10 rounded bg-slate-100 object-cover">
+                                        @else
+                                            <div class="h-10 w-10 rounded bg-slate-100"></div>
+                                        @endif
+                                        <div>
+                                            <p class="text-sm font-bold text-slate-900">{{ $product->name }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <a href="{{ route('admin.events.products.edit', [$event, $product]) }}" class="text-sm font-medium text-[#7D4651] hover:underline">Edit</a>
+                                        <form method="POST" action="{{ route('admin.events.products.destroy', [$event, $product]) }}" onsubmit="return confirm('Delete this product?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="text-sm font-medium text-red-600 hover:underline">Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6">
                     <h2 class="text-sm font-bold uppercase tracking-wide text-slate-500">Coupons</h2>
                     <div class="mt-4 flex items-end gap-8">
                         <div>

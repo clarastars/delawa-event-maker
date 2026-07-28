@@ -9,18 +9,38 @@
         </div>
 
         <div class="grid gap-8 lg:grid-cols-2">
-            <form method="POST" action="{{ route('admin.vouchers.upload.store') }}" enctype="multipart/form-data" class="space-y-6">
+            <form method="POST" action="{{ route('admin.vouchers.upload.store') }}" enctype="multipart/form-data" class="space-y-6" x-data="{ eventId: '{{ old('event_id', $selectedEventId ?? '') }}' }">
                 @csrf
 
                 <div>
                     <label for="event_id" class="block text-sm font-semibold text-slate-700">Event</label>
-                    <select id="event_id" name="event_id" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20" required>
+                    <select id="event_id" name="event_id" x-model="eventId" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20" required>
                         <option value="">Choose an event...</option>
                         @foreach ($events as $event)
                             <option value="{{ $event->id }}" @selected(old('event_id', $selectedEventId) == $event->id)>{{ $event->name }}</option>
                         @endforeach
                     </select>
                     @error('event_id')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div x-show="eventId" x-cloak>
+                    <label for="product_id" class="block text-sm font-semibold text-slate-700">Product (Optional)</label>
+                    <select id="product_id" name="product_id" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20">
+                        <option value="">No specific product (General Pool)</option>
+                        @foreach ($events as $event)
+                            @if($event->products->isNotEmpty())
+                                <optgroup label="{{ $event->name }}" x-show="eventId == {{ $event->id }}">
+                                    @foreach ($event->products as $product)
+                                        <option value="{{ $product->id }}" @selected(old('product_id') == $product->id)>{{ $product->name }}</option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
+                        @endforeach
+                    </select>
+                    <p class="mt-1 text-xs text-slate-500">If selected, vouchers will only be available when users pick this product.</p>
+                    @error('product_id')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>

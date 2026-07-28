@@ -31,7 +31,7 @@ class ContactImporter
      * @param  array{name: ?string, email: ?string, phone: string}  $data
      * @return array{contact: Contact, assigned: bool, skipped: bool}
      */
-    public function import(array $data, ?Event $event = null): array
+    public function import(array $data, ?Event $event = null, int $entries = 1, bool $autoAssign = false): array
     {
         $phone = trim($data['phone']);
         $phoneNormalized = Contact::normalizePhone($phone);
@@ -40,7 +40,7 @@ class ContactImporter
             throw new \InvalidArgumentException('A valid phone number is required.');
         }
 
-        return DB::transaction(function () use ($data, $phone, $phoneNormalized, $event): array {
+        return DB::transaction(function () use ($data, $phone, $phoneNormalized, $event, $entries, $autoAssign): array {
             $email = filled($data['email'] ?? null) && filter_var($data['email'], FILTER_VALIDATE_EMAIL)
                 ? $data['email']
                 : null;
@@ -55,20 +55,24 @@ class ContactImporter
                 ]
             );
 
-            if ($event === null) {
-                return [
-                    'contact' => $contact,
-                    'assigned' => false,
-                    'skipped' => false,
-                ];
-            }
+            if ($event !== null) {
+                if ($autoAssign) {
+                    $voucher = $this->claimEventVoucher($contact, $event);
 
-            $voucher = $this->claimEventVoucher($contact, $event);
+                    return [
+                        'contact' => $contact,
+                        'assigned' => $voucher !== null,
+                        'skipped' => $voucher === null,
+                    ];
+                } else {
+                    $contact->events()->syncWithoutDetaching([$event->id => ['entries' => $entries]]);
+                }
+            }
 
             return [
                 'contact' => $contact,
-                'assigned' => $voucher !== null,
-                'skipped' => $voucher === null,
+                'assigned' => false,
+                'skipped' => false,
             ];
         });
     }
@@ -90,6 +94,7 @@ class ContactImporter
                         ->whereNull('event_id')
                         ->orWhereHas('event', fn (Builder $eventQuery) => $eventQuery->open());
                 })
+                ->orderByRaw('product_id IS NOT NULL')
                 ->orderBy('id')
                 ->lockForUpdate();
 
@@ -145,7 +150,7 @@ class ContactImporter
      * @param  array<int, array{name: ?string, email: ?string, phone: string}>  $rows
      * @return array{imported: int, assigned: int, skipped: int}
      */
-    public function importMany(array $rows, ?Event $event = null): array
+    public function importMany(array $rows, ?Event $event = null, int $entries = 1, bool $autoAssign = false): array
     {
         $imported = 0;
         $assigned = 0;
@@ -153,7 +158,7 @@ class ContactImporter
 
         foreach ($rows as $row) {
             try {
-                $result = $this->import($row, $event);
+                $result = $this->import($row, $event, $entries, $autoAssign);
             } catch (\InvalidArgumentException) {
                 $skipped++;
 

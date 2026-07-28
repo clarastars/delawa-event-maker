@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\ContactUploadController;
 use App\Http\Controllers\Admin\EventClosureController;
 use App\Http\Controllers\Admin\EventController;
+use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\VoucherController;
 use App\Http\Controllers\Admin\VoucherUploadController;
 use App\Http\Controllers\EventEndedController;
@@ -29,6 +30,7 @@ Route::prefix('e/{event:slug}')->name('event.')->middleware(EnsureEventIsOpen::c
         ->name('otp.resend');
     Route::post('/otp/cancel', [EventInviteController::class, 'cancelOtp'])->name('otp.cancel');
     Route::get('/vouchers', [EventInviteController::class, 'showVouchers'])->name('vouchers');
+    Route::post('/products/{product}/claim', [EventInviteController::class, 'claimProduct'])->name('products.claim');
 });
 
 Route::prefix('admin')->name('admin.')->group(function (): void {
@@ -51,6 +53,8 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::get('/events/{event}/closure/pdf', [EventClosureController::class, 'downloadPdf'])->name('events.closure.pdf');
         Route::post('/events/{event}/closure/pdf', [EventClosureController::class, 'regeneratePdf'])->name('events.closure.pdf.regenerate');
         Route::get('/events/{event}/closure/register', [EventClosureController::class, 'downloadRegister'])->name('events.closure.register');
+
+        Route::resource('events.products', ProductController::class)->except(['index', 'show']);
 
         Route::get('/vouchers/upload', [VoucherUploadController::class, 'create'])->name('vouchers.upload.create');
         Route::get('/vouchers/upload/sample', [VoucherUploadController::class, 'sample'])->name('vouchers.upload.sample');

@@ -98,6 +98,73 @@ test('contact with multiple vouchers sees all of them after otp verification', f
     expect($contact->fresh()->activated_at)->not->toBeNull();
 });
 
+test('contact with event entries can see products and claim a voucher', function () {
+    $this->mock(Otp::class, function ($mock): void {
+        $mock->shouldReceive('send')->once()->with('+966551234567');
+        $mock->shouldReceive('verify')->once()->with('+966551234567', '1234')->andReturn(true);
+    });
+
+    $event = Event::factory()->create();
+    $product = $event->products()->create([
+        'name' => 'Gift Box',
+    ]);
+
+    $contact = Contact::create([
+        'name' => 'Sara',
+        'phone' => '+966 55 123 4567',
+        'phone_normalized' => Contact::normalizePhone('+966 55 123 4567'),
+    ]);
+
+    // Grant 1 entry to the contact for the event
+    $contact->events()->attach($event, ['entries' => 1]);
+
+    $voucher = Voucher::create([
+        'contact_id' => null, // Unassigned
+        'event_id' => $event->id,
+        'product_id' => $product->id,
+        'voucher_id' => 'GIFT-100',
+        'creation_date' => now()->toDateString(),
+        'balance' => 250,
+        'status' => Voucher::STATUS_ACTIVE,
+        'one_time_redemption' => true,
+    ]);
+
+    // Send OTP
+    $this->post(route('event.otp.send', $event), [
+        'name' => 'Sara',
+        'phone' => '+966 55 123 4567',
+        'lang' => 'en',
+    ])->assertRedirect(route('event.invite', ['event' => $event, 'lang' => 'en']));
+
+    // Verify OTP
+    $this->post(route('event.otp.verify', $event), [
+        'otp' => '1234',
+        'lang' => 'en',
+    ])->assertRedirect(route('event.vouchers', ['event' => $event, 'lang' => 'en']));
+
+    // See Product Selection
+    $this->get(route('event.vouchers', ['event' => $event, 'lang' => 'en']))
+        ->assertSuccessful()
+        ->assertSee('Gift Box')
+        ->assertSee('Choose your product')
+        ->assertDontSee('GIFT-100'); // Voucher shouldn't be shown yet because it's not claimed
+
+    // Claim Product
+    $this->post(route('event.products.claim', ['event' => $event, 'product' => $product, 'lang' => 'en']))
+        ->assertRedirect(route('event.vouchers', ['event' => $event, 'lang' => 'en']));
+
+    // Now the voucher should be displayed and the product should be gone since 1 entry was claimed
+    $this->get(route('event.vouchers', ['event' => $event, 'lang' => 'en']))
+        ->assertSuccessful()
+        ->assertSee('GIFT-100')
+        ->assertDontSee('Choose your product');
+
+    $this->assertDatabaseHas('vouchers', [
+        'id' => $voucher->id,
+        'contact_id' => $contact->id,
+    ]);
+});
+
 test('contact without an assigned voucher is never given one automatically', function () {
     $event = Event::factory()->create();
 

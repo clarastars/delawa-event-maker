@@ -20,7 +20,7 @@ class VoucherUploadController extends Controller
         return view('admin.vouchers.upload', [
             'sampleCsv' => VoucherImporter::sampleCsvContent(),
             'expectedHeaders' => VoucherImporter::expectedHeaders(),
-            'events' => Event::query()->orderBy('name')->get(),
+            'events' => Event::query()->with('products')->orderBy('name')->get(),
             'selectedEventId' => $request->integer('event') ?: null,
         ]);
     }
@@ -50,8 +50,9 @@ class VoucherUploadController extends Controller
         }
 
         $event = Event::query()->findOrFail($request->validated('event_id'));
+        $productId = $request->validated('product_id') ? (int) $request->validated('product_id') : null;
 
-        $summary = $this->voucherImporter->importMany($rows, $event);
+        $summary = $this->voucherImporter->importMany($rows, $event, $productId);
 
         return redirect()
             ->route('admin.events.show', $event)

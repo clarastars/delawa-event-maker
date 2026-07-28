@@ -14,18 +14,22 @@ class VoucherImporter
      * @param  array<int, array<string, string>>  $rows
      * @return array{imported: int, updated: int, skipped: int}
      */
-    public function importMany(array $rows, ?Event $event = null): array
+    public function importMany(array $rows, ?Event $event = null, ?int $productId = null): array
     {
         $imported = 0;
         $updated = 0;
         $skipped = 0;
 
-        DB::transaction(function () use ($rows, $event, &$imported, &$updated, &$skipped): void {
+        DB::transaction(function () use ($rows, $event, $productId, &$imported, &$updated, &$skipped): void {
             foreach ($rows as $row) {
                 $payload = $this->mapRow($row);
 
                 if ($payload !== null && $event !== null) {
                     $payload['event_id'] = $event->id;
+                }
+
+                if ($payload !== null && $productId !== null) {
+                    $payload['product_id'] = $productId;
                 }
 
                 if ($payload === null) {

@@ -25,6 +25,8 @@ class ContactUploadRequest extends FormRequest
         return [
             'contacts' => ['required', 'file', 'mimes:csv,txt', 'max:2048'],
             'event_id' => ['nullable', 'integer', 'exists:events,id'],
+            'assignment_type' => ['nullable', 'string', 'in:entries,auto_assign'],
+            'entries' => ['nullable', 'integer', 'min:1'],
         ];
     }
 }
