@@ -32,6 +32,7 @@
                         <a href="{{ route('admin.events.index') }}" class="rounded-full bg-white px-4 py-2 text-slate-700 shadow-sm ring-1 ring-slate-200 hover:text-[#4E2E36]">Events</a>
                         <a href="{{ route('admin.vouchers.index') }}" class="rounded-full bg-white px-4 py-2 text-slate-700 shadow-sm ring-1 ring-slate-200 hover:text-[#4E2E36]">Vouchers</a>
                         <a href="{{ route('admin.contacts.index') }}" class="rounded-full bg-white px-4 py-2 text-slate-700 shadow-sm ring-1 ring-slate-200 hover:text-[#4E2E36]">Contacts</a>
+                        <a href="{{ route('admin.reviews.index') }}" class="rounded-full bg-white px-4 py-2 text-slate-700 shadow-sm ring-1 ring-slate-200 hover:text-[#4E2E36]">Reviews</a>
                         <form method="POST" action="{{ route('admin.logout') }}">
                             @csrf
                             <button class="rounded-full bg-slate-950 px-4 py-2 text-white">Log out</button>

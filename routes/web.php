@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\ContactUploadController;
 use App\Http\Controllers\Admin\EventClosureController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\VoucherController;
 use App\Http\Controllers\Admin\VoucherUploadController;
 use App\Http\Controllers\EventEndedController;
@@ -30,6 +31,7 @@ Route::prefix('e/{event:slug}')->name('event.')->middleware(EnsureEventIsOpen::c
         ->name('otp.resend');
     Route::post('/otp/cancel', [EventInviteController::class, 'cancelOtp'])->name('otp.cancel');
     Route::get('/vouchers', [EventInviteController::class, 'showVouchers'])->name('vouchers');
+    Route::post('/vouchers/review', [EventInviteController::class, 'submitReview'])->name('vouchers.review');
     Route::post('/products/{product}/claim', [EventInviteController::class, 'claimProduct'])->name('products.claim');
 });
 
@@ -72,5 +74,7 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::delete('/contacts/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy');
         Route::post('/contacts/{contact}/assign-voucher', [ContactController::class, 'assignVoucher'])->name('contacts.assign-voucher');
         Route::delete('/contacts/{contact}/vouchers/{voucher}', [ContactController::class, 'unassignVoucher'])->name('contacts.unassign-voucher');
+
+        Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
     });
 });

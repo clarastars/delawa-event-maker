@@ -8,6 +8,7 @@ use App\Http\Requests\SendAcceptOtpRequest;
 use App\Http\Requests\VerifyAcceptOtpRequest;
 use App\Models\Contact;
 use App\Models\Event;
+use App\Models\EventReview;
 use App\Models\Product;
 use App\Models\Voucher;
 use App\Support\PhoneNumber;
@@ -222,6 +223,33 @@ class EventInviteController extends Controller
         }
 
         return redirect()->route('event.vouchers', ['event' => $event, 'lang' => $this->locale($request)]);
+    }
+
+    public function submitReview(Request $request, Event $event): RedirectResponse
+    {
+        $contactId = session($this->verifiedKey($event));
+        $contact = filled($contactId) ? Contact::query()->find((int) $contactId) : null;
+
+        if (! $contact) {
+            session()->forget($this->verifiedKey($event));
+
+            return redirect()->route('event.invite', ['event' => $event, 'lang' => $this->locale($request)]);
+        }
+
+        $request->validate([
+            'experience' => ['required', 'string', 'max:1000'],
+        ]);
+
+        EventReview::updateOrCreate(
+            ['event_id' => $event->id, 'contact_id' => $contact->id],
+            ['experience' => $request->string('experience')->toString()]
+        );
+
+        return redirect()->route('event.vouchers', ['event' => $event, 'lang' => $this->locale($request)])
+            ->with('status', $this->message($request, [
+                'en' => 'Thank you for your feedback!',
+                'ar' => 'شكراً لملاحظاتك!',
+            ]));
     }
 
     public function resendOtp(Request $request, Event $event, Otp $otp): RedirectResponse
