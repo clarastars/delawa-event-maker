@@ -111,11 +111,13 @@
                 </div>
 
                 <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-                    <h2 class="text-sm font-bold uppercase tracking-wide text-slate-500">Event name</h2>
-                    <form method="POST" action="{{ route('admin.events.update', $event) }}" class="mt-4 space-y-3">
+                    <h2 class="text-sm font-bold uppercase tracking-wide text-slate-500">Event Details</h2>
+                    <form method="POST" action="{{ route('admin.events.update', $event) }}" class="mt-4 space-y-4">
                         @csrf
                         @method('PUT')
-                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Name</label>
                             <input
                                 type="text"
                                 name="name"
@@ -123,13 +125,42 @@
                                 required
                                 class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-950 outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20"
                             >
-                            <button class="shrink-0 rounded-2xl bg-[#7D4651] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#7D4651]/25 hover:bg-[#6A3A44]">
-                                Save name
-                            </button>
+                            @error('name')
+                                <p class="mt-1 text-sm font-medium text-red-600">{{ $message }}</p>
+                            @enderror
                         </div>
-                        @error('name')
-                            <p class="text-sm font-medium text-red-600">{{ $message }}</p>
-                        @enderror
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Google Maps Link</label>
+                            <input
+                                type="url"
+                                name="maps_link"
+                                value="{{ old('maps_link', $event->maps_link) }}"
+                                placeholder="https://maps.google.com/..."
+                                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20"
+                            >
+                            @error('maps_link')
+                                <p class="mt-1 text-sm font-medium text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Maps Link Label</label>
+                            <input
+                                type="text"
+                                name="maps_link_label"
+                                value="{{ old('maps_link_label', $event->maps_link_label) }}"
+                                placeholder="e.g. Go to Location"
+                                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20"
+                            >
+                            @error('maps_link_label')
+                                <p class="mt-1 text-sm font-medium text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <button class="w-full rounded-2xl bg-[#7D4651] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#7D4651]/25 hover:bg-[#6A3A44]">
+                            Save details
+                        </button>
                     </form>
                 </div>
             </div>

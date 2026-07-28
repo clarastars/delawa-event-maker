@@ -80,17 +80,21 @@ test('event banner must be an image', function () {
         ->assertSessionHasErrors('banner');
 });
 
-test('admin can rename an event', function () {
+test('admin can rename an event and update maps link', function () {
     $admin = User::factory()->create();
     $event = Event::factory()->create(['name' => 'Old Name']);
 
     $this->actingAs($admin)
         ->put(route('admin.events.update', $event), [
             'name' => 'New Name',
+            'maps_link' => 'https://maps.google.com/test',
+            'maps_link_label' => 'View on Maps',
         ])
         ->assertRedirect(route('admin.events.show', $event));
 
-    expect($event->fresh()->name)->toBe('New Name');
+    expect($event->fresh()->name)->toBe('New Name')
+        ->and($event->fresh()->maps_link)->toBe('https://maps.google.com/test')
+        ->and($event->fresh()->maps_link_label)->toBe('View on Maps');
 });
 
 test('admin cannot delete an event that still has vouchers', function () {

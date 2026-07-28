@@ -12,6 +12,12 @@
                 <a href="{{ route('admin.vouchers.create') }}" class="rounded-2xl bg-[#7D4651] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#7D4651]/25 hover:bg-[#6A3A44]">
                     Add Voucher
                 </a>
+                <form method="POST" action="{{ route('admin.logout') }}" class="inline">
+                    @csrf
+                    <button class="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50">
+                        Log out
+                    </button>
+                </form>
             </div>
         </div>
 

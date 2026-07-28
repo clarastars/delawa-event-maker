@@ -15,6 +15,8 @@ use Illuminate\Support\Str;
 #[Fillable([
     'name',
     'slug',
+    'maps_link',
+    'maps_link_label',
     'banner_path',
     'closed_at',
     'closed_by_user_id',
