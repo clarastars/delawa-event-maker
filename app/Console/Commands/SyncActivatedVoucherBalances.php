@@ -9,13 +9,12 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 #[Signature('tsepass:sync-activated-balances')]
-#[Description('Fetch remaining gift card balances from Tsepass for all assigned vouchers (1 API call per second)')]
+#[Description('Fetch remaining gift card balances from Tsepass for all vouchers (1 API call per second)')]
 class SyncActivatedVoucherBalances extends Command
 {
     public function handle(GiftCardBalance $giftCardBalance): int
     {
         $vouchers = Voucher::query()
-            ->whereNotNull('contact_id')
             ->orderBy('id')
             ->cursor();
 
@@ -36,7 +35,8 @@ class SyncActivatedVoucherBalances extends Command
 
             if ($remainingBalance === null) {
                 $failed++;
-                $this->warn("Failed to fetch balance for {$voucher->voucher_id} (contact #{$voucher->contact_id}).");
+                $contactInfo = $voucher->contact_id ? " (contact #{$voucher->contact_id})" : '';
+                $this->warn("Failed to fetch balance for {$voucher->voucher_id}{$contactInfo}.");
 
                 continue;
             }
@@ -50,7 +50,7 @@ class SyncActivatedVoucherBalances extends Command
             $this->line("Updated {$voucher->voucher_id}: remaining {$remainingBalance}");
         }
 
-        $this->info("Processed {$processedVouchers} assigned voucher(s). Updated {$updated}, failed {$failed}.");
+        $this->info("Processed {$processedVouchers} voucher(s). Updated {$updated}, failed {$failed}.");
 
         return self::SUCCESS;
     }

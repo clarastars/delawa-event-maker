@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
 
-test('sync command updates remaining balance for all assigned vouchers', function () {
+test('sync command updates remaining balance for all vouchers', function () {
     config([
         'services.tsepass.api_url' => 'https://api.tsepass.test',
         'services.tsepass.api_key' => 'secret',
@@ -102,7 +102,7 @@ test('sync command updates remaining balance for all assigned vouchers', functio
     Http::assertSentCount(3);
 });
 
-test('sync command skips unassigned vouchers', function () {
+test('sync command updates unassigned vouchers', function () {
     config([
         'services.tsepass.api_url' => 'https://api.tsepass.test',
         'services.tsepass.api_key' => 'secret',
@@ -127,9 +127,9 @@ test('sync command skips unassigned vouchers', function () {
         ->assertSuccessful();
 
     expect(Voucher::query()->where('voucher_id', 'EG-POOL-100')->first())
-        ->remaining_balance->toBeNull();
+        ->remaining_balance->toEqual(150.0);
 
-    Http::assertSentCount(0);
+    Http::assertSentCount(1);
 });
 
 test('sync command updates remaining balance for all vouchers on an activated contact', function () {
