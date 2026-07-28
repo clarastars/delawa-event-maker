@@ -56,13 +56,15 @@
         @endif
         <script>
             document.addEventListener('submit', function (e) {
-                if (e.target.closest('form[data-loading-overlay]')) {
-                    const overlay = document.getElementById('loading-overlay');
-                    if (overlay) {
-                        overlay.classList.remove('hidden');
-                        overlay.classList.add('flex');
+                setTimeout(function () {
+                    if (!e.defaultPrevented && e.target.closest('form[data-loading-overlay]')) {
+                        const overlay = document.getElementById('loading-overlay');
+                        if (overlay) {
+                            overlay.classList.remove('hidden');
+                            overlay.classList.add('flex');
+                        }
                     }
-                }
+                }, 0);
             });
         </script>
     </head>
@@ -147,7 +149,7 @@
                             @foreach($products as $product)
                                 <div class="overflow-hidden rounded-2xl bg-white shadow-xl">
                                     @if ($product->image_path)
-                                        <img src="{{ Storage::disk('public')->url($product->image_path) }}" alt="{{ $product->name }}" class="h-64 w-full object-cover">
+                                        <img src="{{ Storage::disk('public')->url($product->image_path) }}" alt="{{ $product->name }}" class="w-full object-cover">
                                     @else
                                         <div class="h-64 w-full bg-slate-100 flex items-center justify-center">
                                             <span class="text-slate-400">No Image</span>
@@ -168,7 +170,7 @@
                     </div>
                 @endif
                 
-                @if ($remainingEntries === 0 && $vouchers->isNotEmpty())
+                @if ($remainingEntries === 0 && $vouchers->isNotEmpty() && !$hasReview)
                     <div class="mb-8 w-full overflow-hidden rounded-[2rem] bg-white shadow-2xl shadow-slate-900/25 ring-1 ring-white/60 p-6">
                         <h2 class="text-lg font-bold text-[#7D4651] mb-4 text-center">{{ $copy['review_title'] }}</h2>
                         <form data-loading-overlay method="POST" action="{{ route('event.vouchers.review', ['event' => $event, 'lang' => $locale]) }}">

@@ -148,6 +148,10 @@ class EventInviteController extends Controller
             $products = $event->products;
         }
 
+        $hasReview = EventReview::where('event_id', $event->id)
+            ->where('contact_id', $contact->id)
+            ->exists();
+
         return view('event.vouchers', [
             'locale' => $this->locale($request),
             'event' => $event,
@@ -155,6 +159,7 @@ class EventInviteController extends Controller
             'vouchers' => $vouchers,
             'remainingEntries' => $remainingEntries,
             'products' => $products,
+            'hasReview' => $hasReview,
             'remainingBalances' => $vouchers->mapWithKeys(fn ($voucher) => [
                 $voucher->id => $giftCardBalance->remainingBalance($voucher->voucher_id),
             ]),
@@ -240,10 +245,23 @@ class EventInviteController extends Controller
             'experience' => ['required', 'string', 'max:1000'],
         ]);
 
-        EventReview::updateOrCreate(
-            ['event_id' => $event->id, 'contact_id' => $contact->id],
-            ['experience' => $request->string('experience')->toString()]
-        );
+        $hasReview = EventReview::where('event_id', $event->id)
+            ->where('contact_id', $contact->id)
+            ->exists();
+
+        if ($hasReview) {
+            return redirect()->route('event.vouchers', ['event' => $event, 'lang' => $this->locale($request)])
+                ->withErrors(['experience' => $this->message($request, [
+                    'en' => 'You have already submitted a review.',
+                    'ar' => 'لقد قمت بإرسال تقييم مسبقاً.',
+                ])]);
+        }
+
+        EventReview::create([
+            'event_id' => $event->id,
+            'contact_id' => $contact->id,
+            'experience' => $request->string('experience')->toString(),
+        ]);
 
         return redirect()->route('event.vouchers', ['event' => $event, 'lang' => $this->locale($request)])
             ->with('status', $this->message($request, [

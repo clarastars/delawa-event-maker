@@ -80,8 +80,24 @@
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
             @vite(['resources/css/app.css', 'resources/js/accept-phone.js', 'resources/js/accept-otp.js'])
         @endif
+        <script>
+            document.addEventListener('submit', function (e) {
+                setTimeout(function () {
+                    if (!e.defaultPrevented && e.target.closest('form[data-loading-overlay]')) {
+                        const overlay = document.getElementById('loading-overlay');
+                        if (overlay) {
+                            overlay.classList.remove('hidden');
+                            overlay.classList.add('flex');
+                        }
+                    }
+                }, 0);
+            });
+        </script>
     </head>
     <body class="min-h-screen bg-[#7D4651] text-slate-950 antialiased">
+        <div id="loading-overlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-white/70 backdrop-blur-sm transition-opacity duration-300">
+            <div class="h-12 w-12 animate-spin rounded-full border-4 border-[#7D4651] border-t-transparent"></div>
+        </div>
         <main class="mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center justify-center px-6 py-10">
             <section class="grid w-full gap-3 rounded-[2rem] bg-white/95 p-3 shadow-2xl shadow-slate-900/20 md:grid-cols-[1.1fr_0.9fr]">
                 <div class="overflow-hidden rounded-[1.5rem] bg-white">
@@ -126,7 +142,7 @@
                             </p>
                         @endif
 
-                        <form method="POST" action="{{ route('event.otp.verify', $event) }}" class="mt-5 space-y-5" data-disable-on-submit>
+                        <form method="POST" action="{{ route('event.otp.verify', $event) }}" class="mt-5 space-y-5" data-disable-on-submit data-loading-overlay>
                             @csrf
                             <input type="hidden" name="lang" value="{{ $locale }}">
                             <div>
@@ -166,6 +182,7 @@
                         class="space-y-5"
                         data-locale="{{ $locale }}"
                         data-disable-on-submit
+                        data-loading-overlay
                     >
                         @csrf
                         <input type="hidden" name="lang" value="{{ $locale }}">
