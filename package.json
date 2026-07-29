@@ -14,6 +14,7 @@
         "vite": "^8.0.0"
     },
     "dependencies": {
+        "html5-qrcode": "^2.3.8",
         "intl-tel-input": "^25.15.1",
         "jsbarcode": "^3.12.3",
         "opencode-codebase-index": "^0.20.0"

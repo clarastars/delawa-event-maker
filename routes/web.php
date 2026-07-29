@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\EventClosureController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ReviewController;
+use App\Http\Controllers\Admin\ScanController;
 use App\Http\Controllers\Admin\VoucherController;
 use App\Http\Controllers\Admin\VoucherUploadController;
 use App\Http\Controllers\EventEndedController;
@@ -76,5 +77,8 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::delete('/contacts/{contact}/vouchers/{voucher}', [ContactController::class, 'unassignVoucher'])->name('contacts.unassign-voucher');
 
         Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
+
+        Route::get('/scan', [ScanController::class, 'index'])->name('scan.index');
+        Route::post('/scan', [ScanController::class, 'store'])->name('scan.store');
     });
 });

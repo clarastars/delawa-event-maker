@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/js/accept-phone.js', 'resources/js/accept-otp.js', 'resources/js/voucher.js', 'resources/js/event-vouchers.js'],
+            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/js/accept-phone.js', 'resources/js/accept-otp.js', 'resources/js/voucher.js', 'resources/js/event-vouchers.js', 'resources/js/scanner.js'],
             refresh: true,
             fonts: [
                 bunny('Montserrat', {
