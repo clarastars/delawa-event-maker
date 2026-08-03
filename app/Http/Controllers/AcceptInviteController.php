@@ -136,7 +136,9 @@ class AcceptInviteController extends Controller
         return view('accept.voucher', [
             'locale' => $this->locale($request),
             'voucher' => $voucher,
-            'remainingBalance' => $giftCardBalance->remainingBalance($voucher->voucher_id),
+            'remainingBalance' => $voucher->isLocal()
+                ? $voucher->storedRemainingBalance()
+                : $giftCardBalance->remainingBalance($voucher->voucher_id),
         ]);
     }
 

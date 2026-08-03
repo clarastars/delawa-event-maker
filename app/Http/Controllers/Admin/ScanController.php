@@ -48,6 +48,7 @@ class ScanController extends Controller
         $voucher->update([
             'status' => Voucher::STATUS_REDEEMED,
             'redeemed_at' => now(),
+            'remaining_balance' => 0,
         ]);
 
         $contactName = $voucher->contact ? $voucher->contact->name : 'Unknown Contact';

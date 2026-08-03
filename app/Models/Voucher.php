@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['contact_id', 'event_id', 'product_id', 'voucher_id', 'creation_date', 'expiry_date', 'balance', 'remaining_balance', 'remaining_balance_synced_at', 'status', 'one_time_redemption', 'redeemed_at'])]
+#[Fillable(['contact_id', 'event_id', 'product_id', 'source', 'voucher_id', 'creation_date', 'expiry_date', 'balance', 'remaining_balance', 'remaining_balance_synced_at', 'status', 'one_time_redemption', 'redeemed_at'])]
 class Voucher extends Model
 {
     public const STATUS_ACTIVE = 'active';
@@ -23,6 +23,15 @@ class Voucher extends Model
         self::STATUS_INACTIVE,
         self::STATUS_REDEEMED,
         self::STATUS_EXPIRED,
+    ];
+
+    public const SOURCE_TSEPASS = 'tsepass';
+
+    public const SOURCE_LOCAL = 'local';
+
+    public const SOURCES = [
+        self::SOURCE_TSEPASS,
+        self::SOURCE_LOCAL,
     ];
 
     protected function casts(): array
@@ -53,6 +62,32 @@ class Voucher extends Model
         return $this->belongsTo(Product::class);
     }
 
+    public function isLocal(): bool
+    {
+        return $this->source === self::SOURCE_LOCAL;
+    }
+
+    public function isTsepass(): bool
+    {
+        return $this->source === self::SOURCE_TSEPASS;
+    }
+
+    /**
+     * Remaining balance for display: local uses stored value; callers should use GiftCardBalance for tsepass.
+     */
+    public function storedRemainingBalance(): ?float
+    {
+        if ($this->remaining_balance !== null) {
+            return (float) $this->remaining_balance;
+        }
+
+        if ($this->isLocal()) {
+            return (float) $this->balance;
+        }
+
+        return null;
+    }
+
     public function scopeRedeemable(Builder $query): Builder
     {
         return $query
@@ -62,6 +97,16 @@ class Voucher extends Model
                     ->whereNull('expiry_date')
                     ->orWhereDate('expiry_date', '>=', now()->toDateString());
             });
+    }
+
+    public function scopeTsepass(Builder $query): Builder
+    {
+        return $query->where('source', self::SOURCE_TSEPASS);
+    }
+
+    public function scopeLocal(Builder $query): Builder
+    {
+        return $query->where('source', self::SOURCE_LOCAL);
     }
 
     /**

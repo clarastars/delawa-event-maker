@@ -15,6 +15,7 @@ class SyncActivatedVoucherBalances extends Command
     public function handle(GiftCardBalance $giftCardBalance): int
     {
         $vouchers = Voucher::query()
+            ->tsepass()
             ->orderBy('id')
             ->cursor();
 

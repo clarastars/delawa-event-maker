@@ -9,6 +9,9 @@
                 <a href="{{ route('admin.vouchers.upload.create') }}" class="rounded-2xl border border-[#7D4651] bg-white px-5 py-3 text-sm font-bold text-[#4E2E36] hover:bg-[#7D4651]/5">
                     Upload CSV
                 </a>
+                <a href="{{ route('admin.vouchers.generate.create') }}" class="rounded-2xl border border-[#7D4651] bg-white px-5 py-3 text-sm font-bold text-[#4E2E36] hover:bg-[#7D4651]/5">
+                    Generate local
+                </a>
                 <a href="{{ route('admin.vouchers.create') }}" class="rounded-2xl bg-[#7D4651] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#7D4651]/25 hover:bg-[#6A3A44]">
                     Add Voucher
                 </a>

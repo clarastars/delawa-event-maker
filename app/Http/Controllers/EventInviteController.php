@@ -161,7 +161,9 @@ class EventInviteController extends Controller
             'products' => $products,
             'hasReview' => $hasReview,
             'remainingBalances' => $vouchers->mapWithKeys(fn ($voucher) => [
-                $voucher->id => $giftCardBalance->remainingBalance($voucher->voucher_id),
+                $voucher->id => $voucher->isLocal()
+                    ? $voucher->storedRemainingBalance()
+                    : $giftCardBalance->remainingBalance($voucher->voucher_id),
             ]),
         ]);
     }

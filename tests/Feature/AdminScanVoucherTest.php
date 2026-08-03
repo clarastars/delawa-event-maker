@@ -56,7 +56,40 @@ it('can scan and redeem an active voucher', function () {
     $this->assertDatabaseHas('vouchers', [
         'id' => $voucher->id,
         'status' => Voucher::STATUS_REDEEMED,
+        'remaining_balance' => 0,
     ]);
+});
+
+it('zeroes remaining balance when redeeming a local voucher', function () {
+    $user = User::factory()->create();
+
+    $event = Event::create([
+        'name' => 'Test Event',
+        'slug' => 'test-event-local',
+        'is_open' => true,
+    ]);
+
+    $voucher = Voucher::create([
+        'event_id' => $event->id,
+        'source' => Voucher::SOURCE_LOCAL,
+        'voucher_id' => 'DLWSCAN0001',
+        'status' => Voucher::STATUS_ACTIVE,
+        'creation_date' => now(),
+        'expiry_date' => now()->addDays(5),
+        'balance' => 25,
+        'remaining_balance' => 25,
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('admin.scan.store'), [
+            'voucher_id' => 'DLWSCAN0001',
+        ])
+        ->assertRedirect()
+        ->assertSessionHas('scan_success');
+
+    expect($voucher->fresh())
+        ->status->toBe(Voucher::STATUS_REDEEMED)
+        ->remaining_balance->toEqual(0.0);
 });
 
 it('rejects an invalid barcode', function () {
