@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Event;
+use App\Models\Product;
+use App\Models\Voucher;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -17,7 +19,8 @@ class OngoingEventsReport
      *     total_value: float,
      *     assigned_value: float,
      *     used_value: float,
-     *     leftover_value: float
+     *     leftover_value: float,
+     *     products: Collection<int, array{product_id: int|null, name: string, image_url: string|null, used_count: int}>
      * }
      */
     public function forEvent(Event $event): array
@@ -31,7 +34,42 @@ class OngoingEventsReport
             'assigned_value' => $metrics['values']['distributed_value'],
             'used_value' => $metrics['values']['consumed_value'],
             'leftover_value' => $metrics['values']['undistributed_value'],
+            'products' => $this->productUsage($event),
         ];
+    }
+
+    /**
+     * Redeemed (scanned) coupon counts per product for the event.
+     *
+     * @return Collection<int, array{product_id: int|null, name: string, image_url: string|null, used_count: int}>
+     */
+    public function productUsage(Event $event): Collection
+    {
+        $usedByProduct = $event->vouchers()
+            ->where('status', Voucher::STATUS_REDEEMED)
+            ->get(['product_id'])
+            ->countBy(fn (Voucher $voucher): string => (string) ($voucher->product_id ?? 'null'));
+
+        $products = $event->products()
+            ->orderBy('id')
+            ->get()
+            ->map(fn (Product $product): array => [
+                'product_id' => $product->id,
+                'name' => $product->name,
+                'image_url' => $product->imageUrl(),
+                'used_count' => (int) ($usedByProduct[(string) $product->id] ?? 0),
+            ]);
+
+        if ($event->vouchers()->whereNull('product_id')->exists()) {
+            $products->push([
+                'product_id' => null,
+                'name' => 'General pool',
+                'image_url' => null,
+                'used_count' => (int) ($usedByProduct['null'] ?? 0),
+            ]);
+        }
+
+        return $products->values();
     }
 
     /**

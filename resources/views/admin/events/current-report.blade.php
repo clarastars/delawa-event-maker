@@ -100,6 +100,69 @@
             unicode-bidi: isolate;
         }
 
+        h2.products-heading {
+            margin: 36px 0 14px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        table.products {
+            width: 100%;
+            max-width: 720px;
+            border-collapse: collapse;
+        }
+
+        table.products th,
+        table.products td {
+            border: 1px solid #000;
+            padding: 12px 14px;
+            vertical-align: middle;
+            text-align: right;
+        }
+
+        table.products th {
+            font-weight: 700;
+            background: #f2f2f2;
+        }
+
+        table.products td.count,
+        table.products td.id {
+            text-align: left;
+            font-variant-numeric: tabular-nums;
+            direction: ltr;
+            unicode-bidi: isolate;
+        }
+
+        table.products .product-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: flex-start;
+            flex-direction: row-reverse;
+        }
+
+        table.products img {
+            width: 64px;
+            height: 64px;
+            object-fit: cover;
+            border: 1px solid #000;
+            background: #f7f7f7;
+            flex-shrink: 0;
+        }
+
+        table.products .no-image {
+            width: 64px;
+            height: 64px;
+            border: 1px dashed #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #666;
+            flex-shrink: 0;
+            background: #fafafa;
+        }
+
         .footer {
             margin-top: 28px;
             padding-top: 12px;
@@ -112,8 +175,14 @@
 
             .toolbar { display: none; }
 
-            table.report th {
+            table.report th,
+            table.products th {
                 background: #fff !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            table.products img {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
@@ -169,6 +238,37 @@
             </tr>
         </tbody>
     </table>
+
+    @if ($report['products']->isNotEmpty())
+        <h2 class="products-heading">القسائم المستخدمة حسب المنتج</h2>
+        <table class="products">
+            <thead>
+                <tr>
+                    <th>المنتج</th>
+                    <th>رقم المنتج</th>
+                    <th>المستخدمة</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($report['products'] as $product)
+                    <tr>
+                        <td>
+                            <div class="product-cell">
+                                @if ($product['image_url'])
+                                    <img src="{{ $product['image_url'] }}" alt="{{ $product['name'] }}">
+                                @else
+                                    <div class="no-image">بدون صورة</div>
+                                @endif
+                                <span>{{ $product['name'] }}</span>
+                            </div>
+                        </td>
+                        <td class="id">{{ $product['product_id'] ?? '—' }}</td>
+                        <td class="count">{{ number_format($product['used_count']) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
 
     <div class="footer">
         Delawa Events &middot; التقرير الحالي للفعالية &middot; ملخص جاهز للطباعة

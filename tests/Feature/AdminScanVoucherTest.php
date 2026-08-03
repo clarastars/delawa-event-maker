@@ -104,6 +104,9 @@ it('rejects an invalid barcode', function () {
 });
 
 it('rejects an already redeemed voucher', function () {
+    config(['app.timezone' => 'Asia/Riyadh']);
+    date_default_timezone_set('Asia/Riyadh');
+
     $user = User::factory()->create();
 
     $event = Event::create([
@@ -111,12 +114,14 @@ it('rejects an already redeemed voucher', function () {
         'slug' => 'test-event-2',
     ]);
 
+    $redeemedAt = now()->setTimezone('Asia/Riyadh')->setTime(15, 38);
+
     $voucher = Voucher::create([
         'event_id' => $event->id,
         'voucher_id' => 'USED_CODE',
         'status' => Voucher::STATUS_REDEEMED,
         'creation_date' => now(),
-        'redeemed_at' => now()->subDay(),
+        'redeemed_at' => $redeemedAt,
     ]);
 
     $this->actingAs($user)
@@ -124,7 +129,7 @@ it('rejects an already redeemed voucher', function () {
             'voucher_id' => 'USED_CODE',
         ])
         ->assertRedirect()
-        ->assertSessionHas('scan_error');
+        ->assertSessionHas('scan_error', 'Voucher cannot be used. It is already redeemed on '.$redeemedAt->format('M d, Y h:i A').'.');
 
     $this->assertDatabaseHas('vouchers', [
         'id' => $voucher->id,
@@ -132,6 +137,9 @@ it('rejects an already redeemed voucher', function () {
     ]);
 });
 
+it('uses asia riyadh as the application timezone', function () {
+    expect(config('app.timezone'))->toBe('Asia/Riyadh');
+});
 it('rejects an expired voucher', function () {
     $user = User::factory()->create();
 

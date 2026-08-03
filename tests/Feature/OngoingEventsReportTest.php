@@ -2,6 +2,7 @@
 
 use App\Models\Contact;
 use App\Models\Event;
+use App\Models\Product;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Services\OngoingEventsReport;
@@ -46,7 +47,122 @@ test('ongoing events report summarizes current coupon metrics for an open event'
         ->and($report['assigned_value'])->toBe(200.0)
         ->and($report['used_value'])->toBe(50.0)
         ->and($report['leftover_coupons'])->toBe(1)
-        ->and($report['leftover_value'])->toBe(100.0);
+        ->and($report['leftover_value'])->toBe(100.0)
+        ->and($report['products'])->toHaveCount(1)
+        ->and($report['products'][0])->toMatchArray([
+            'product_id' => null,
+            'name' => 'General pool',
+            'image_url' => null,
+            'used_count' => 0,
+        ]);
+});
+
+test('ongoing events report counts redeemed coupons per product with image', function () {
+    $event = Event::factory()->create();
+    $gold = Product::factory()->create([
+        'event_id' => $event->id,
+        'name' => 'Gold Bundle',
+        'image_path' => 'product-images/gold.jpg',
+    ]);
+    $silver = Product::factory()->create([
+        'event_id' => $event->id,
+        'name' => 'Silver Bundle',
+        'image_path' => null,
+    ]);
+
+    Voucher::create([
+        'event_id' => $event->id,
+        'product_id' => $gold->id,
+        'voucher_id' => 'GOLD-USED-1',
+        'creation_date' => now()->toDateString(),
+        'balance' => 25,
+        'remaining_balance' => 0,
+        'status' => Voucher::STATUS_REDEEMED,
+        'redeemed_at' => now(),
+        'one_time_redemption' => true,
+    ]);
+
+    Voucher::create([
+        'event_id' => $event->id,
+        'product_id' => $gold->id,
+        'voucher_id' => 'GOLD-OPEN',
+        'creation_date' => now()->toDateString(),
+        'balance' => 25,
+        'remaining_balance' => 25,
+        'status' => Voucher::STATUS_ACTIVE,
+        'one_time_redemption' => true,
+    ]);
+
+    Voucher::create([
+        'event_id' => $event->id,
+        'product_id' => $silver->id,
+        'voucher_id' => 'SILVER-USED',
+        'creation_date' => now()->toDateString(),
+        'balance' => 18,
+        'remaining_balance' => 0,
+        'status' => Voucher::STATUS_REDEEMED,
+        'redeemed_at' => now(),
+        'one_time_redemption' => true,
+    ]);
+
+    $report = app(OngoingEventsReport::class)->forEvent($event);
+
+    expect($report['products'])->toHaveCount(2)
+        ->and($report['products'][0])->toMatchArray([
+            'product_id' => $gold->id,
+            'name' => 'Gold Bundle',
+            'used_count' => 1,
+        ])
+        ->and($report['products'][0]['image_url'])->toContain('product-images/gold.jpg')
+        ->and($report['products'][1])->toMatchArray([
+            'product_id' => $silver->id,
+            'name' => 'Silver Bundle',
+            'image_url' => null,
+            'used_count' => 1,
+        ]);
+});
+
+test('admin current report shows product usage section with images', function () {
+    $admin = User::factory()->create();
+    $event = Event::factory()->create(['name' => 'Ramadan Campaign']);
+    $product = Product::factory()->create([
+        'event_id' => $event->id,
+        'name' => 'Ice Cream Cone',
+        'image_path' => 'product-images/cone.jpg',
+    ]);
+
+    Voucher::create([
+        'event_id' => $event->id,
+        'product_id' => $product->id,
+        'voucher_id' => 'USED-1',
+        'creation_date' => now()->toDateString(),
+        'balance' => 25,
+        'remaining_balance' => 0,
+        'status' => Voucher::STATUS_REDEEMED,
+        'redeemed_at' => now(),
+        'one_time_redemption' => true,
+    ]);
+
+    Voucher::create([
+        'event_id' => $event->id,
+        'product_id' => $product->id,
+        'voucher_id' => 'USED-2',
+        'creation_date' => now()->toDateString(),
+        'balance' => 25,
+        'remaining_balance' => 0,
+        'status' => Voucher::STATUS_REDEEMED,
+        'redeemed_at' => now(),
+        'one_time_redemption' => true,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.events.current-report', $event))
+        ->assertSuccessful()
+        ->assertSee('القسائم المستخدمة حسب المنتج')
+        ->assertSee('Ice Cream Cone')
+        ->assertSee((string) $product->id)
+        ->assertSee('product-images/cone.jpg', false)
+        ->assertSee('2');
 });
 
 test('admin events index shows current report button for open events', function () {
