@@ -49,6 +49,7 @@
                         <th class="px-4 py-3">Name</th>
                         <th class="px-4 py-3">Phone</th>
                         <th class="px-4 py-3">Email</th>
+                        <th class="px-4 py-3">Entries</th>
                         <th class="px-4 py-3">Vouchers</th>
                         <th class="px-4 py-3">Activated</th>
                         <th class="px-4 py-3">Card value</th>
@@ -62,6 +63,13 @@
                             <td class="px-4 py-4 font-semibold text-slate-950">{{ $contact->name ?: '—' }}</td>
                             <td class="px-4 py-4 text-slate-600" dir="ltr">{{ $contact->phone }}</td>
                             <td class="px-4 py-4 text-slate-600">{{ $contact->email ?: '—' }}</td>
+                            <td class="px-4 py-4 text-slate-600">
+                                @if ($contact->entries_count !== null)
+                                    {{ (int) $contact->entries_count }}
+                                @else
+                                    —
+                                @endif
+                            </td>
                             <td class="px-4 py-4">
                                 @if ($contact->vouchers->isNotEmpty())
                                     <div class="flex flex-wrap gap-1">
@@ -106,7 +114,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-4 py-10 text-center text-slate-500">
+                            <td colspan="9" class="px-4 py-10 text-center text-slate-500">
                                 @if ($search !== '')
                                     No contacts found for "{{ $search }}".
                                 @else

@@ -307,6 +307,33 @@ test('admin can list and search contacts', function () {
         ->assertDontSee('Omar Ali');
 });
 
+test('admin contacts index shows number of entries for each contact', function () {
+    $admin = User::factory()->create();
+    $event = Event::factory()->create();
+
+    $withEntries = Contact::create([
+        'name' => 'Sara Ahmed',
+        'email' => 'sara@example.com',
+        'phone' => '0551234567',
+        'phone_normalized' => Contact::normalizePhone('0551234567'),
+    ]);
+    $withEntries->events()->attach($event, ['entries' => 3]);
+
+    Contact::create([
+        'name' => 'Omar Ali',
+        'email' => 'omar@example.com',
+        'phone' => '0559876543',
+        'phone_normalized' => Contact::normalizePhone('0559876543'),
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.contacts.index'))
+        ->assertSuccessful()
+        ->assertSee('Entries')
+        ->assertSee('3')
+        ->assertSee('—');
+});
+
 test('admin contact show page hides vouchers from closed events in assign dropdown', function () {
     $admin = User::factory()->create();
 
@@ -527,6 +554,86 @@ test('admin cannot unassign a voucher that belongs to another contact', function
     $this->assertDatabaseHas('vouchers', [
         'id' => $voucher->id,
         'contact_id' => $otherContact->id,
+    ]);
+});
+
+test('admin contact show page displays and allows updating event entries', function () {
+    $admin = User::factory()->create();
+    $event = Event::factory()->create(['name' => 'Ramadan Gifts']);
+
+    $contact = Contact::create([
+        'name' => 'Sara Ahmed',
+        'phone' => '0551234567',
+        'phone_normalized' => Contact::normalizePhone('0551234567'),
+    ]);
+    $contact->events()->attach($event, ['entries' => 2]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.contacts.show', $contact))
+        ->assertSuccessful()
+        ->assertSee('Entries')
+        ->assertSee('Ramadan Gifts')
+        ->assertSee('value="2"', false);
+
+    $this->actingAs($admin)
+        ->put(route('admin.contacts.update-entries', [$contact, $event]), [
+            'entries' => 5,
+            'editing_event_id' => $event->id,
+        ])
+        ->assertRedirect(route('admin.contacts.show', $contact))
+        ->assertSessionHas('status');
+
+    $this->assertDatabaseHas('contact_event', [
+        'contact_id' => $contact->id,
+        'event_id' => $event->id,
+        'entries' => 5,
+    ]);
+});
+
+test('admin cannot set entries below vouchers already claimed for an event', function () {
+    $admin = User::factory()->create();
+    $event = Event::factory()->create();
+
+    $contact = Contact::create([
+        'name' => 'Sara Ahmed',
+        'phone' => '0551234567',
+        'phone_normalized' => Contact::normalizePhone('0551234567'),
+    ]);
+    $contact->events()->attach($event, ['entries' => 3]);
+
+    Voucher::create([
+        'voucher_id' => 'EG-SA-100',
+        'creation_date' => now()->toDateString(),
+        'balance' => 100,
+        'status' => Voucher::STATUS_ACTIVE,
+        'one_time_redemption' => true,
+        'contact_id' => $contact->id,
+        'event_id' => $event->id,
+    ]);
+
+    Voucher::create([
+        'voucher_id' => 'EG-SA-101',
+        'creation_date' => now()->toDateString(),
+        'balance' => 100,
+        'status' => Voucher::STATUS_ACTIVE,
+        'one_time_redemption' => true,
+        'contact_id' => $contact->id,
+        'event_id' => $event->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->from(route('admin.contacts.show', $contact))
+        ->put(route('admin.contacts.update-entries', [$contact, $event]), [
+            'entries' => 1,
+            'editing_event_id' => $event->id,
+        ])
+        ->assertRedirect(route('admin.contacts.show', $contact))
+        ->assertSessionHasErrors('entries');
+
+    $this->assertDatabaseHas('contact_event', [
+        'contact_id' => $contact->id,
+        'event_id' => $event->id,
+        'entries' => 3,
     ]);
 });
 

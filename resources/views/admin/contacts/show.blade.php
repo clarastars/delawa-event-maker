@@ -57,6 +57,44 @@
                         <dd class="mt-1 text-slate-950">{{ $contact->email ?: '—' }}</dd>
                     </div>
                     <div>
+                        <dt class="font-semibold text-slate-500">Entries</dt>
+                        <dd class="mt-1">
+                            @forelse ($contact->events as $event)
+                                <form
+                                    method="POST"
+                                    action="{{ route('admin.contacts.update-entries', [$contact, $event]) }}"
+                                    class="{{ ! $loop->first ? 'mt-4 border-t border-slate-200 pt-4' : '' }} space-y-3"
+                                >
+                                    @csrf
+                                    @method('PUT')
+                                    <input type="hidden" name="editing_event_id" value="{{ $event->id }}">
+                                    <p class="font-semibold text-slate-950">{{ $event->name }}</p>
+                                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                                        <input
+                                            type="number"
+                                            name="entries"
+                                            min="1"
+                                            value="{{ (int) old('editing_event_id') === $event->id ? old('entries', $event->pivot->entries) : $event->pivot->entries }}"
+                                            required
+                                            aria-label="Entries for {{ $event->name }}"
+                                            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-950 outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20 sm:max-w-[8rem]"
+                                        >
+                                        <button class="shrink-0 rounded-2xl bg-[#7D4651] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#7D4651]/25 hover:bg-[#6A3A44]">
+                                            Save entries
+                                        </button>
+                                    </div>
+                                    @if ((int) old('editing_event_id') === $event->id)
+                                        @error('entries')
+                                            <p class="text-sm font-medium text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    @endif
+                                </form>
+                            @empty
+                                <span class="text-slate-950">—</span>
+                            @endforelse
+                        </dd>
+                    </div>
+                    <div>
                         <dt class="font-semibold text-slate-500">Added</dt>
                         <dd class="mt-1 text-slate-950">{{ $contact->created_at?->format('Y-m-d H:i') }}</dd>
                     </div>

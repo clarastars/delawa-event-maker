@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AssignVoucherRequest;
+use App\Http\Requests\UpdateContactEventEntriesRequest;
 use App\Http\Requests\UpdateContactPhoneRequest;
 use App\Models\Contact;
+use App\Models\Event;
 use App\Models\Voucher;
 use App\Services\ContactImporter;
 use Illuminate\Database\Eloquent\Builder;
@@ -25,6 +27,7 @@ class ContactController extends Controller
 
         $contacts = Contact::query()
             ->with('vouchers')
+            ->withSum('events as entries_count', 'contact_event.entries')
             ->search($search)
             ->latest()
             ->paginate(20)
@@ -84,7 +87,7 @@ class ContactController extends Controller
 
     public function show(Contact $contact): View
     {
-        $contact->load('vouchers.event');
+        $contact->load(['vouchers.event', 'events']);
 
         $availableVouchers = Voucher::query()
             ->with('event')
@@ -116,6 +119,17 @@ class ContactController extends Controller
         return redirect()
             ->route('admin.contacts.show', $contact)
             ->with('status', 'Phone number updated.');
+    }
+
+    public function updateEntries(UpdateContactEventEntriesRequest $request, Contact $contact, Event $event): RedirectResponse
+    {
+        $contact->events()->updateExistingPivot($event->id, [
+            'entries' => (int) $request->validated('entries'),
+        ]);
+
+        return redirect()
+            ->route('admin.contacts.show', $contact)
+            ->with('status', "Entries for {$event->name} updated.");
     }
 
     public function destroy(Contact $contact): RedirectResponse
