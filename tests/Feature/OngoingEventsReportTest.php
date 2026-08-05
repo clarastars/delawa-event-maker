@@ -54,6 +54,88 @@ test('ongoing events report summarizes current coupon metrics for an open event'
             'name' => 'General pool',
             'image_url' => null,
             'used_count' => 0,
+        ])
+        ->and($report['assignments'])->toHaveCount(1)
+        ->and($report['assignments'][0])->toMatchArray([
+            'contact_name' => 'Sara Ahmed',
+            'contact_phone' => '0551234567',
+            'product_name' => 'General pool',
+            'voucher_id' => 'OPEN-ASSIGNED',
+            'value' => 200.0,
+        ]);
+});
+
+test('ongoing events report lists each contact product choice and voucher', function () {
+    $event = Event::factory()->create();
+    $gold = Product::factory()->create([
+        'event_id' => $event->id,
+        'name' => 'Gold Bundle',
+    ]);
+    $silver = Product::factory()->create([
+        'event_id' => $event->id,
+        'name' => 'Silver Bundle',
+    ]);
+    $sara = Contact::create([
+        'name' => 'Sara Ahmed',
+        'phone' => '0551234567',
+        'phone_normalized' => Contact::normalizePhone('0551234567'),
+        'activated_at' => now(),
+    ]);
+    $omar = Contact::create([
+        'name' => 'Omar Ali',
+        'phone' => '0559876543',
+        'phone_normalized' => Contact::normalizePhone('0559876543'),
+        'activated_at' => now(),
+    ]);
+
+    Voucher::create([
+        'event_id' => $event->id,
+        'contact_id' => $sara->id,
+        'product_id' => $gold->id,
+        'voucher_id' => 'GOLD-SARA',
+        'creation_date' => now()->toDateString(),
+        'balance' => 25,
+        'status' => Voucher::STATUS_ACTIVE,
+        'one_time_redemption' => true,
+    ]);
+
+    Voucher::create([
+        'event_id' => $event->id,
+        'contact_id' => $omar->id,
+        'product_id' => $silver->id,
+        'voucher_id' => 'SILVER-OMAR',
+        'creation_date' => now()->toDateString(),
+        'balance' => 18,
+        'status' => Voucher::STATUS_ACTIVE,
+        'one_time_redemption' => true,
+    ]);
+
+    Voucher::create([
+        'event_id' => $event->id,
+        'product_id' => $gold->id,
+        'voucher_id' => 'GOLD-UNASSIGNED',
+        'creation_date' => now()->toDateString(),
+        'balance' => 25,
+        'status' => Voucher::STATUS_ACTIVE,
+        'one_time_redemption' => true,
+    ]);
+
+    $report = app(OngoingEventsReport::class)->forEvent($event);
+
+    expect($report['assignments'])->toHaveCount(2)
+        ->and($report['assignments'][0])->toMatchArray([
+            'contact_name' => 'Omar Ali',
+            'contact_phone' => '0559876543',
+            'product_name' => 'Silver Bundle',
+            'voucher_id' => 'SILVER-OMAR',
+            'value' => 18.0,
+        ])
+        ->and($report['assignments'][1])->toMatchArray([
+            'contact_name' => 'Sara Ahmed',
+            'contact_phone' => '0551234567',
+            'product_name' => 'Gold Bundle',
+            'voucher_id' => 'GOLD-SARA',
+            'value' => 25.0,
         ]);
 });
 
@@ -180,6 +262,10 @@ test('admin events index shows current report button for open events', function 
 test('admin can view printable current report for an open event', function () {
     $admin = User::factory()->create();
     $event = Event::factory()->create(['name' => 'Ramadan Campaign']);
+    $product = Product::factory()->create([
+        'event_id' => $event->id,
+        'name' => 'Ice Cream Cone',
+    ]);
     $contact = Contact::create([
         'name' => 'Sara Ahmed',
         'phone' => '0551234567',
@@ -190,6 +276,7 @@ test('admin can view printable current report for an open event', function () {
     Voucher::create([
         'event_id' => $event->id,
         'contact_id' => $contact->id,
+        'product_id' => $product->id,
         'voucher_id' => 'OPEN-ASSIGNED',
         'creation_date' => now()->toDateString(),
         'balance' => 200,
@@ -219,6 +306,13 @@ test('admin can view printable current report for an open event', function () {
         ->assertSee('إجمالي القيمة المستخدمة')
         ->assertSee('القسائم المتبقية (غير مخصصة)')
         ->assertSee('القيمة المتبقية المتاحة')
+        ->assertSee('اختيارات الضيوف والقسائم')
+        ->assertSee('المنتج المختار')
+        ->assertSee('Sara Ahmed')
+        ->assertSee('0551234567')
+        ->assertSee('Ice Cream Cone')
+        ->assertSee('OPEN-ASSIGNED')
+        ->assertDontSee('OPEN-AVAILABLE')
         ->assertSee('Download statement')
         ->assertSee(route('admin.events.current-report.statement', $event), false)
         ->assertSee('300.00 SAR')
@@ -231,6 +325,10 @@ test('admin can view printable current report for an open event', function () {
 test('admin can download the current report statement csv', function () {
     $admin = User::factory()->create();
     $event = Event::factory()->create(['name' => 'Ramadan Campaign']);
+    $product = Product::factory()->create([
+        'event_id' => $event->id,
+        'name' => 'Ice Cream Cone',
+    ]);
     $contact = Contact::create([
         'name' => 'Sara Ahmed',
         'phone' => '0551234567',
@@ -240,6 +338,7 @@ test('admin can download the current report statement csv', function () {
     Voucher::create([
         'event_id' => $event->id,
         'contact_id' => $contact->id,
+        'product_id' => $product->id,
         'voucher_id' => 'OPEN-ASSIGNED',
         'creation_date' => now()->toDateString(),
         'balance' => 200,
@@ -268,12 +367,15 @@ test('admin can download the current report statement csv', function () {
         ->toContain('رقم القسيمة')
         ->toContain('الاسم')
         ->toContain('الجوال')
+        ->toContain('المنتج')
         ->toContain('القيمة')
         ->toContain('OPEN-ASSIGNED')
         ->toContain('Sara Ahmed')
         ->toContain('0551234567')
+        ->toContain('Ice Cream Cone')
         ->toContain('200.00')
         ->toContain('OPEN-AVAILABLE')
+        ->toContain('General pool')
         ->toContain('100.00');
 });
 

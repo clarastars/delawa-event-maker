@@ -35,7 +35,7 @@ class EventClosureMetrics
     public function forEvent(Event $event): array
     {
         $vouchers = $event->vouchers()
-            ->with('contact')
+            ->with(['contact', 'product'])
             ->orderBy('voucher_id')
             ->get();
 
@@ -127,6 +127,8 @@ class EventClosureMetrics
             'contact_name' => $voucher->contact?->name,
             'contact_phone' => $voucher->contact?->phone,
             'contact_activated_at' => $voucher->contact?->activated_at?->format('Y-m-d H:i'),
+            'product_id' => $voucher->product_id,
+            'product_name' => $voucher->product?->name,
             'card_value' => $cardValue,
             'remaining_balance' => $remainingBalance,
             'value_consumed' => $valueConsumed,

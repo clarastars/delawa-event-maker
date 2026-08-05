@@ -20,7 +20,8 @@ class OngoingEventsReport
      *     assigned_value: float,
      *     used_value: float,
      *     leftover_value: float,
-     *     products: Collection<int, array{product_id: int|null, name: string, image_url: string|null, used_count: int}>
+     *     products: Collection<int, array{product_id: int|null, name: string, image_url: string|null, used_count: int}>,
+     *     assignments: Collection<int, array{contact_name: string, contact_phone: string, product_name: string, voucher_id: string, value: float}>
      * }
      */
     public function forEvent(Event $event): array
@@ -35,7 +36,32 @@ class OngoingEventsReport
             'used_value' => $metrics['values']['consumed_value'],
             'leftover_value' => $metrics['values']['undistributed_value'],
             'products' => $this->productUsage($event),
+            'assignments' => $this->assignments($metrics['vouchers']),
         ];
+    }
+
+    /**
+     * Assigned vouchers with the contact and product they chose.
+     *
+     * @param  Collection<int, array<string, mixed>>  $voucherRows
+     * @return Collection<int, array{contact_name: string, contact_phone: string, product_name: string, voucher_id: string, value: float}>
+     */
+    public function assignments(Collection $voucherRows): Collection
+    {
+        return $voucherRows
+            ->filter(fn (array $row): bool => (bool) $row['is_assigned'])
+            ->map(fn (array $row): array => [
+                'contact_name' => (string) ($row['contact_name'] ?? ''),
+                'contact_phone' => (string) ($row['contact_phone'] ?? ''),
+                'product_name' => (string) ($row['product_name'] ?? 'General pool'),
+                'voucher_id' => (string) $row['voucher_id'],
+                'value' => (float) $row['card_value'],
+            ])
+            ->sortBy([
+                ['contact_name', 'asc'],
+                ['voucher_id', 'asc'],
+            ])
+            ->values();
     }
 
     /**
@@ -73,7 +99,7 @@ class OngoingEventsReport
     }
 
     /**
-     * @return Collection<int, array{voucher_id: string, name: string, phone: string, value: float}>
+     * @return Collection<int, array{voucher_id: string, name: string, phone: string, product: string, value: float}>
      */
     public function statementRows(Event $event): Collection
     {
@@ -82,6 +108,7 @@ class OngoingEventsReport
                 'voucher_id' => (string) $row['voucher_id'],
                 'name' => (string) ($row['contact_name'] ?? ''),
                 'phone' => (string) ($row['contact_phone'] ?? ''),
+                'product' => (string) ($row['product_name'] ?? 'General pool'),
                 'value' => (float) $row['card_value'],
             ])
             ->values();
@@ -95,13 +122,14 @@ class OngoingEventsReport
             return '';
         }
 
-        fputcsv($handle, ['رقم القسيمة', 'الاسم', 'الجوال', 'القيمة']);
+        fputcsv($handle, ['رقم القسيمة', 'الاسم', 'الجوال', 'المنتج', 'القيمة']);
 
         foreach ($this->statementRows($event) as $row) {
             fputcsv($handle, [
                 $row['voucher_id'],
                 $row['name'],
                 $row['phone'],
+                $row['product'],
                 number_format($row['value'], 2, '.', ''),
             ]);
         }

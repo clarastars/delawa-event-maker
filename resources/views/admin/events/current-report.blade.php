@@ -163,6 +163,43 @@
             background: #fafafa;
         }
 
+        h2.assignments-heading {
+            margin: 36px 0 14px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        table.assignments {
+            width: 100%;
+            max-width: 960px;
+            border-collapse: collapse;
+        }
+
+        table.assignments th,
+        table.assignments td {
+            border: 1px solid #000;
+            padding: 10px 12px;
+            vertical-align: top;
+            text-align: right;
+        }
+
+        table.assignments th {
+            font-weight: 700;
+            background: #f2f2f2;
+        }
+
+        table.assignments td.ltr {
+            text-align: left;
+            font-variant-numeric: tabular-nums;
+            direction: ltr;
+            unicode-bidi: isolate;
+        }
+
+        table.assignments .empty {
+            text-align: center;
+            color: #555;
+        }
+
         .footer {
             margin-top: 28px;
             padding-top: 12px;
@@ -176,7 +213,8 @@
             .toolbar { display: none; }
 
             table.report th,
-            table.products th {
+            table.products th,
+            table.assignments th {
                 background: #fff !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
@@ -269,6 +307,34 @@
             </tbody>
         </table>
     @endif
+
+    <h2 class="assignments-heading">اختيارات الضيوف والقسائم</h2>
+    <table class="assignments">
+        <thead>
+            <tr>
+                <th>الاسم</th>
+                <th>الجوال</th>
+                <th>المنتج المختار</th>
+                <th>رقم القسيمة</th>
+                <th>القيمة</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($report['assignments'] as $assignment)
+                <tr>
+                    <td>{{ $assignment['contact_name'] !== '' ? $assignment['contact_name'] : '—' }}</td>
+                    <td class="ltr">{{ $assignment['contact_phone'] !== '' ? $assignment['contact_phone'] : '—' }}</td>
+                    <td>{{ $assignment['product_name'] }}</td>
+                    <td class="ltr">{{ $assignment['voucher_id'] }}</td>
+                    <td class="ltr">{{ number_format($assignment['value'], 2) }} SAR</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="5" class="empty">لا توجد قسائم مخصصة بعد</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
 
     <div class="footer">
         Delawa Events &middot; التقرير الحالي للفعالية &middot; ملخص جاهز للطباعة
