@@ -285,6 +285,7 @@
                     <th>المنتج</th>
                     <th>رقم المنتج</th>
                     <th>المستخدمة</th>
+                    <th>المتبقية</th>
                 </tr>
             </thead>
             <tbody>
@@ -302,6 +303,7 @@
                         </td>
                         <td class="id">{{ $product['product_id'] ?? '—' }}</td>
                         <td class="count">{{ number_format($product['used_count']) }}</td>
+                        <td class="count">{{ number_format($product['remaining_count']) }}</td>
                     </tr>
                 @endforeach
             </tbody>

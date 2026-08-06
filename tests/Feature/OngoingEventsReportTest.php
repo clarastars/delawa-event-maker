@@ -54,6 +54,7 @@ test('ongoing events report summarizes current coupon metrics for an open event'
             'name' => 'General pool',
             'image_url' => null,
             'used_count' => 0,
+            'remaining_count' => 1,
         ])
         ->and($report['assignments'])->toHaveCount(1)
         ->and($report['assignments'][0])->toMatchArray([
@@ -194,6 +195,7 @@ test('ongoing events report counts redeemed coupons per product with image', fun
             'product_id' => $gold->id,
             'name' => 'Gold Bundle',
             'used_count' => 1,
+            'remaining_count' => 1,
         ])
         ->and($report['products'][0]['image_url'])->toContain('product-images/gold.jpg')
         ->and($report['products'][1])->toMatchArray([
@@ -201,6 +203,7 @@ test('ongoing events report counts redeemed coupons per product with image', fun
             'name' => 'Silver Bundle',
             'image_url' => null,
             'used_count' => 1,
+            'remaining_count' => 0,
         ]);
 });
 
@@ -237,6 +240,16 @@ test('admin current report shows product usage section with images', function ()
         'one_time_redemption' => true,
     ]);
 
+    Voucher::create([
+        'event_id' => $event->id,
+        'product_id' => $product->id,
+        'voucher_id' => 'LEFT-1',
+        'creation_date' => now()->toDateString(),
+        'balance' => 25,
+        'status' => Voucher::STATUS_ACTIVE,
+        'one_time_redemption' => true,
+    ]);
+
     $this->actingAs($admin)
         ->get(route('admin.events.current-report', $event))
         ->assertSuccessful()
@@ -244,7 +257,10 @@ test('admin current report shows product usage section with images', function ()
         ->assertSee('Ice Cream Cone')
         ->assertSee((string) $product->id)
         ->assertSee('product-images/cone.jpg', false)
-        ->assertSee('2');
+        ->assertSee('المستخدمة')
+        ->assertSee('المتبقية')
+        ->assertSee('2')
+        ->assertSee('1');
 });
 
 test('admin events index shows current report button for open events', function () {

@@ -20,7 +20,7 @@ class OngoingEventsReport
      *     assigned_value: float,
      *     used_value: float,
      *     leftover_value: float,
-     *     products: Collection<int, array{product_id: int|null, name: string, image_url: string|null, used_count: int}>,
+     *     products: Collection<int, array{product_id: int|null, name: string, image_url: string|null, used_count: int, remaining_count: int}>,
      *     assignments: Collection<int, array{contact_name: string, contact_phone: string, product_name: string, voucher_id: string, value: float}>
      * }
      */
@@ -65,14 +65,20 @@ class OngoingEventsReport
     }
 
     /**
-     * Redeemed (scanned) coupon counts per product for the event.
+     * Redeemed and remaining (unassigned) coupon counts per product for the event.
      *
-     * @return Collection<int, array{product_id: int|null, name: string, image_url: string|null, used_count: int}>
+     * @return Collection<int, array{product_id: int|null, name: string, image_url: string|null, used_count: int, remaining_count: int}>
      */
     public function productUsage(Event $event): Collection
     {
         $usedByProduct = $event->vouchers()
             ->where('status', Voucher::STATUS_REDEEMED)
+            ->get(['product_id'])
+            ->countBy(fn (Voucher $voucher): string => (string) ($voucher->product_id ?? 'null'));
+
+        $remainingByProduct = $event->vouchers()
+            ->whereNull('contact_id')
+            ->where('status', Voucher::STATUS_ACTIVE)
             ->get(['product_id'])
             ->countBy(fn (Voucher $voucher): string => (string) ($voucher->product_id ?? 'null'));
 
@@ -84,6 +90,7 @@ class OngoingEventsReport
                 'name' => $product->name,
                 'image_url' => $product->imageUrl(),
                 'used_count' => (int) ($usedByProduct[(string) $product->id] ?? 0),
+                'remaining_count' => (int) ($remainingByProduct[(string) $product->id] ?? 0),
             ]);
 
         if ($event->vouchers()->whereNull('product_id')->exists()) {
@@ -92,6 +99,7 @@ class OngoingEventsReport
                 'name' => 'General pool',
                 'image_url' => null,
                 'used_count' => (int) ($usedByProduct['null'] ?? 0),
+                'remaining_count' => (int) ($remainingByProduct['null'] ?? 0),
             ]);
         }
 
