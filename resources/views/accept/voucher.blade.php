@@ -58,7 +58,7 @@
                 >
 
                 <div class="border-t border-slate-100 px-6 py-6 text-center">
-                    <svg id="voucher-barcode" class="mx-auto h-12 w-full max-w-[14rem]" aria-hidden="true"></svg>
+                    <canvas id="voucher-qr" class="mx-auto h-40 w-40" aria-hidden="true"></canvas>
                     <p data-voucher-id-label class="mt-2 font-mono text-sm font-semibold tracking-wide text-slate-950" dir="ltr">{{ $voucher->voucher_id }}</p>
 
                     @if ($remainingBalance !== null)

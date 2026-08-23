@@ -1,15 +1,15 @@
-import JsBarcode from 'jsbarcode';
+import QRCode from 'qrcode';
 
 const OUTPUT_WIDTH = 1200;
-const BARCODE_WIDTH_RATIO = 0.5;
+const QR_WIDTH_RATIO = 0.28;
 
-const barcodeOptions = {
-    format: 'CODE128',
-    displayValue: false,
-    margin: 8,
-    width: 2,
-    height: 44,
-    lineColor: '#0f172a',
+const qrOptions = {
+    errorCorrectionLevel: 'M',
+    margin: 2,
+    color: {
+        dark: '#0f172a',
+        light: '#ffffff',
+    },
 };
 
 function loadImage(src) {
@@ -21,25 +21,15 @@ function loadImage(src) {
     });
 }
 
-function renderBarcodeCanvas(voucherId, targetWidth) {
+async function renderQrCanvas(voucherId, targetWidth) {
     const canvas = document.createElement('canvas');
-    JsBarcode(canvas, voucherId, barcodeOptions);
 
-    if (canvas.width >= targetWidth) {
-        return canvas;
-    }
+    await QRCode.toCanvas(canvas, voucherId, {
+        ...qrOptions,
+        width: targetWidth,
+    });
 
-    const scaled = document.createElement('canvas');
-    scaled.width = targetWidth;
-    scaled.height = Math.round((canvas.height / canvas.width) * targetWidth);
-
-    const context = scaled.getContext('2d');
-
-    if (context) {
-        context.drawImage(canvas, 0, 0, scaled.width, scaled.height);
-    }
-
-    return scaled;
+    return canvas;
 }
 
 function triggerDownload(dataUrl, filename) {
@@ -59,10 +49,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const voucherId = card.dataset.voucherId ?? '';
-    const barcode = document.getElementById('voucher-barcode');
+    const qrCanvas = document.getElementById('voucher-qr');
 
-    if (barcode && voucherId !== '') {
-        JsBarcode(barcode, voucherId, barcodeOptions);
+    if (qrCanvas && voucherId !== '') {
+        QRCode.toCanvas(qrCanvas, voucherId, {
+            ...qrOptions,
+            width: 180,
+        }).catch((error) => {
+            console.error('Failed to render voucher QR code:', error);
+        });
     }
 
     const downloadButton = document.getElementById('download-voucher');
@@ -81,19 +76,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const image = await loadImage(voucherImage.src);
             const width = OUTPUT_WIDTH;
             const imageHeight = Math.round(image.naturalHeight * (width / image.naturalWidth));
-            const horizontalPadding = Math.round(width * 0.06);
             const topPadding = Math.round(width * 0.05);
-            const barcodeGap = Math.round(width * 0.03);
+            const qrGap = Math.round(width * 0.03);
             const labelGap = Math.round(width * 0.02);
             const bottomPadding = Math.round(width * 0.05);
-            const barcodeTargetWidth = Math.round(width * BARCODE_WIDTH_RATIO);
-            const barcodeCanvas = renderBarcodeCanvas(voucherId, barcodeTargetWidth);
-            const barcodeHeight = barcodeCanvas.height;
+            const qrTargetWidth = Math.round(width * QR_WIDTH_RATIO);
+            const qrCanvasRendered = await renderQrCanvas(voucherId, qrTargetWidth);
+            const qrHeight = qrCanvasRendered.height;
             const labelLineHeight = Math.round(width * 0.03);
             const oneTimeLineHeight = oneTimeLabel ? Math.round(width * 0.018) : 0;
             const footerHeight = topPadding
-                + barcodeHeight
-                + barcodeGap
+                + qrHeight
+                + qrGap
                 + labelLineHeight
                 + (oneTimeLabel ? labelGap + oneTimeLineHeight : 0)
                 + bottomPadding;
@@ -120,16 +114,16 @@ document.addEventListener('DOMContentLoaded', () => {
             context.lineTo(width, footerTop);
             context.stroke();
 
-            const barcodeX = (width - barcodeTargetWidth) / 2;
-            const barcodeY = footerTop + topPadding;
-            context.drawImage(barcodeCanvas, barcodeX, barcodeY, barcodeTargetWidth, barcodeHeight);
+            const qrX = (width - qrTargetWidth) / 2;
+            const qrY = footerTop + topPadding;
+            context.drawImage(qrCanvasRendered, qrX, qrY, qrTargetWidth, qrHeight);
 
             const label = voucherIdLabel?.textContent?.trim() || voucherId;
             const labelFontSize = Math.round(width * 0.013);
             context.fillStyle = '#020617';
             context.font = `600 ${labelFontSize}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`;
             context.textAlign = 'center';
-            context.fillText(label, width / 2, barcodeY + barcodeHeight + barcodeGap + labelFontSize);
+            context.fillText(label, width / 2, qrY + qrHeight + qrGap + labelFontSize);
 
             if (oneTimeLabel) {
                 const oneTimeFontSize = Math.round(width * 0.012);
@@ -138,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 context.fillText(
                     oneTimeLabel.textContent.trim(),
                     width / 2,
-                    barcodeY + barcodeHeight + barcodeGap + labelLineHeight + labelGap + oneTimeFontSize,
+                    qrY + qrHeight + qrGap + labelLineHeight + labelGap + oneTimeFontSize,
                 );
             }
 

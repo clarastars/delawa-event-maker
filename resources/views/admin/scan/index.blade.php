@@ -1,10 +1,10 @@
-<x-admin.layout title="Scan Barcode">
+<x-admin.layout title="Scan QR Code">
     @push('vite')
         @vite('resources/js/scanner.js')
     @endpush
 
     <div class="mb-6 flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-slate-900">Scan Barcode</h1>
+        <h1 class="text-2xl font-bold text-slate-900">Scan QR Code</h1>
     </div>
 
     @if (session('scan_success'))
@@ -38,7 +38,7 @@
             @csrf
             
             <label for="voucher_id" class="block text-sm font-medium text-slate-700 mb-4">
-                Ready to scan. Please scan the voucher barcode now.
+                Ready to scan. Please scan the voucher QR code now.
             </label>
             
             <div class="flex items-center gap-2 mb-4">
@@ -49,7 +49,7 @@
                     autofocus 
                     autocomplete="off"
                     class="block w-full rounded-2xl border-0 py-4 px-6 text-center text-2xl text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-[#4E2E36] sm:text-2xl sm:leading-6 transition-shadow" 
-                    placeholder="Scan or enter barcode..." 
+                    placeholder="Scan or enter QR code..." 
                     required
                 >
                 <button type="button" id="start-camera" class="flex shrink-0 items-center justify-center rounded-2xl bg-slate-900 p-4 text-white shadow-sm hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-[#4E2E36] focus:ring-offset-2" title="Use Camera Scanner">
@@ -72,7 +72,7 @@
             </div>
 
             <div class="mt-8 text-sm text-slate-500">
-                <p>The scanner will automatically submit upon reading a barcode.</p>
+                <p>The scanner will automatically submit upon reading a QR code.</p>
                 <p class="mt-1">Alternatively, enter the code manually and press Enter.</p>
             </div>
         </form>

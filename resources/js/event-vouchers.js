@@ -1,20 +1,25 @@
-import JsBarcode from 'jsbarcode';
+import QRCode from 'qrcode';
 
-const barcodeOptions = {
-    format: 'CODE128',
-    displayValue: false,
-    margin: 8,
-    width: 2,
-    height: 44,
-    lineColor: '#0f172a',
+const qrOptions = {
+    errorCorrectionLevel: 'M',
+    margin: 2,
+    width: 180,
+    color: {
+        dark: '#0f172a',
+        light: '#ffffff',
+    },
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-voucher-barcode]').forEach((element) => {
-        const value = element.dataset.voucherBarcode ?? '';
+    document.querySelectorAll('[data-voucher-qr]').forEach((element) => {
+        const value = element.dataset.voucherQr ?? '';
 
-        if (value !== '') {
-            JsBarcode(element, value, barcodeOptions);
+        if (value === '') {
+            return;
         }
+
+        QRCode.toCanvas(element, value, qrOptions).catch((error) => {
+            console.error('Failed to render voucher QR code:', error);
+        });
     });
 });

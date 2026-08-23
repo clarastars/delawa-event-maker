@@ -84,6 +84,7 @@ test('guest can reveal an active voucher after otp verification', function () {
     $this->get(route('accept.voucher.show', ['lang' => 'en']))
         ->assertSuccessful()
         ->assertSee('id="voucher-card"', false)
+        ->assertSee('id="voucher-qr"', false)
         ->assertSee('voucher.webp', false)
         ->assertSee('EG-SA-100')
         ->assertSee('Download voucher')

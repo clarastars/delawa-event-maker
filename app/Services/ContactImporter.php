@@ -57,12 +57,12 @@ class ContactImporter
 
             if ($event !== null) {
                 if ($autoAssign) {
-                    $voucher = $this->claimEventVoucher($contact, $event);
+                    $assignedCount = $this->claimEventVouchers($contact, $event, max(1, $entries));
 
                     return [
                         'contact' => $contact,
-                        'assigned' => $voucher !== null,
-                        'skipped' => $voucher === null,
+                        'assigned' => $assignedCount > 0,
+                        'skipped' => $assignedCount === 0,
                     ];
                 } else {
                     $contact->events()->syncWithoutDetaching([$event->id => ['entries' => $entries]]);
@@ -132,17 +132,44 @@ class ContactImporter
      */
     public function claimEventVoucher(Contact $contact, Event $event): ?Voucher
     {
-        return DB::transaction(function () use ($contact, $event): ?Voucher {
-            $existing = $contact->vouchers()
+        if ($this->claimEventVouchers($contact, $event, 1) === 0) {
+            return null;
+        }
+
+        return $contact->vouchers()
+            ->where('event_id', $event->id)
+            ->redeemable()
+            ->latest('id')
+            ->first();
+    }
+
+    /**
+     * Ensure the contact holds at least $count redeemable vouchers for the event,
+     * claiming from the event's unassigned pool as needed. Prefers general
+     * (no product) vouchers via assignVoucher ordering.
+     */
+    public function claimEventVouchers(Contact $contact, Event $event, int $count): int
+    {
+        return DB::transaction(function () use ($contact, $event, $count): int {
+            $existingCount = $contact->vouchers()
                 ->where('event_id', $event->id)
                 ->redeemable()
-                ->first();
+                ->count();
 
-            if ($existing) {
-                return $existing;
+            $needed = max(0, $count - $existingCount);
+
+            for ($i = 0; $i < $needed; $i++) {
+                $voucher = $this->assignVoucher($contact, event: $event)['voucher'];
+
+                if ($voucher === null) {
+                    break;
+                }
             }
 
-            return $this->assignVoucher($contact, event: $event)['voucher'];
+            return $contact->vouchers()
+                ->where('event_id', $event->id)
+                ->redeemable()
+                ->count();
         });
     }
 

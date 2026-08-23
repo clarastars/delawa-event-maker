@@ -24,7 +24,7 @@ class ScanController extends Controller
         $voucher = Voucher::with(['contact', 'event'])->where('voucher_id', $request->voucher_id)->first();
 
         if (! $voucher) {
-            return back()->with('scan_error', 'Invalid barcode. Voucher not found.');
+            return back()->with('scan_error', 'Invalid QR code. Voucher not found.');
         }
 
         // Use the scope to check if it's redeemable.

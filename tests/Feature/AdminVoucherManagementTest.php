@@ -58,6 +58,7 @@ test('admin can upload contacts and grant them entries for an event', function (
         ->post(route('admin.contacts.upload.store'), [
             'contacts' => $file,
             'event_id' => $event->id,
+            'assignment_type' => 'entries',
             'entries' => 2,
         ])
         ->assertRedirect(route('admin.contacts.index'));
@@ -107,6 +108,7 @@ test('admin can add a contact via form and grant them entries for an event', fun
             'email' => 'ahmed@example.com',
             'phone' => '0559876543',
             'event_id' => $event->id,
+            'assignment_type' => 'entries',
             'entries' => 3,
         ])
         ->assertRedirect(route('admin.contacts.upload.create'))
@@ -122,6 +124,76 @@ test('admin can add a contact via form and grant them entries for an event', fun
         'event_id' => $event->id,
         'entries' => 3,
     ]);
+});
+
+test('admin can auto-assign multiple general vouchers matching entries count', function () {
+    $admin = User::factory()->create();
+    $event = Event::factory()->create();
+
+    foreach (['AUTO-001', 'AUTO-002', 'AUTO-003'] as $voucherId) {
+        Voucher::create([
+            'event_id' => $event->id,
+            'voucher_id' => $voucherId,
+            'creation_date' => now()->toDateString(),
+            'balance' => 100,
+            'status' => Voucher::STATUS_ACTIVE,
+            'one_time_redemption' => true,
+        ]);
+    }
+
+    $this->actingAs($admin)
+        ->post(route('admin.contacts.store'), [
+            'name' => 'Sara',
+            'email' => 'sara@example.com',
+            'phone' => '0551112233',
+            'event_id' => $event->id,
+            'assignment_type' => 'auto_assign',
+            'entries' => 2,
+        ])
+        ->assertRedirect(route('admin.contacts.upload.create'))
+        ->assertSessionHas('status');
+
+    $contact = Contact::firstWhere('phone_normalized', Contact::normalizePhone('0551112233'));
+
+    expect($contact)->not->toBeNull()
+        ->and($contact->vouchers()->where('event_id', $event->id)->count())->toBe(2)
+        ->and(Voucher::query()->whereNull('contact_id')->where('event_id', $event->id)->count())->toBe(1);
+});
+
+test('admin can upload contacts and auto-assign vouchers matching entries count', function () {
+    $admin = User::factory()->create();
+    $event = Event::factory()->create();
+
+    foreach (['UP-001', 'UP-002', 'UP-003', 'UP-004'] as $voucherId) {
+        Voucher::create([
+            'event_id' => $event->id,
+            'voucher_id' => $voucherId,
+            'creation_date' => now()->toDateString(),
+            'balance' => 100,
+            'status' => Voucher::STATUS_ACTIVE,
+            'one_time_redemption' => true,
+        ]);
+    }
+
+    $file = UploadedFile::fake()->createWithContent(
+        'contacts.csv',
+        "name,email,phone\nSara,sara@example.com,+966551234567\nOmar,,0559876543\n"
+    );
+
+    $this->actingAs($admin)
+        ->post(route('admin.contacts.upload.store'), [
+            'contacts' => $file,
+            'event_id' => $event->id,
+            'assignment_type' => 'auto_assign',
+            'entries' => 2,
+        ])
+        ->assertRedirect(route('admin.contacts.index'));
+
+    $sara = Contact::firstWhere('phone_normalized', Contact::normalizePhone('+966551234567'));
+    $omar = Contact::firstWhere('phone_normalized', Contact::normalizePhone('0559876543'));
+
+    expect($sara->vouchers()->where('event_id', $event->id)->count())->toBe(2)
+        ->and($omar->vouchers()->where('event_id', $event->id)->count())->toBe(2);
 });
 
 test('admin can upload vouchers from tsv file into an event', function () {

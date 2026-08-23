@@ -127,7 +127,7 @@
                         @foreach ($vouchers as $voucher)
                             <div class="w-full overflow-hidden rounded-[2rem] bg-white shadow-2xl shadow-slate-900/25 ring-1 ring-white/60">
                                 <div class="px-6 py-6 text-center">
-                                    <svg data-voucher-barcode="{{ $voucher->voucher_id }}" class="mx-auto h-12 w-full max-w-[14rem]" aria-hidden="true"></svg>
+                                    <canvas data-voucher-qr="{{ $voucher->voucher_id }}" class="mx-auto h-40 w-40" aria-hidden="true"></canvas>
                                     <p class="mt-2 font-mono text-sm font-semibold tracking-wide text-slate-950" dir="ltr">{{ $voucher->voucher_id }}</p>
 
                                     @if ($remainingBalances[$voucher->id] !== null)

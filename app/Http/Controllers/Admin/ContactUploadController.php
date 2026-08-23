@@ -52,14 +52,16 @@ class ContactUploadController extends Controller
 
         if ($autoAssign) {
             if ($result['assigned']) {
+                $voucherLabel = $entries === 1 ? 'voucher' : 'vouchers';
+
                 return redirect()
                     ->route('admin.contacts.upload.create')
-                    ->with('status', "Contact saved and a {$event->name} voucher assigned successfully.");
+                    ->with('status', "Contact saved and {$entries} {$event->name} {$voucherLabel} assigned successfully.");
             }
 
             return redirect()
                 ->route('admin.contacts.upload.create')
-                ->with('status', "Contact saved, but no {$event->name} voucher could be assigned (the contact may already have one, or the pool is empty).");
+                ->with('status', "Contact saved, but no {$event->name} voucher could be assigned (the contact may already have enough, or the pool is empty).");
         }
 
         return redirect()

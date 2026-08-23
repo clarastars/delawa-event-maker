@@ -34,7 +34,7 @@
                     <option value="admin" @selected(old('role') == 'admin')>Admin</option>
                     <option value="scanner" @selected(old('role') == 'scanner')>Scanner</option>
                 </select>
-                <p class="mt-2 text-sm text-slate-500">Admins have full access. Scanners can only access the barcode scanning page.</p>
+                <p class="mt-2 text-sm text-slate-500">Admins have full access. Scanners can only access the QR code scanning page.</p>
                 @error('role') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
 

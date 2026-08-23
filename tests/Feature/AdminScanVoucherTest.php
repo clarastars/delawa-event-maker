@@ -14,7 +14,7 @@ it('shows the scan page for authenticated admin', function () {
     $this->actingAs($user)
         ->get(route('admin.scan.index'))
         ->assertOk()
-        ->assertSee('Scan Barcode');
+        ->assertSee('Scan QR Code');
 });
 
 it('requires authentication to access scan page', function () {
@@ -92,7 +92,7 @@ it('zeroes remaining balance when redeeming a local voucher', function () {
         ->remaining_balance->toEqual(0.0);
 });
 
-it('rejects an invalid barcode', function () {
+it('rejects an invalid QR code', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
@@ -100,7 +100,7 @@ it('rejects an invalid barcode', function () {
             'voucher_id' => 'DOES_NOT_EXIST',
         ])
         ->assertRedirect()
-        ->assertSessionHas('scan_error', 'Invalid barcode. Voucher not found.');
+        ->assertSessionHas('scan_error', 'Invalid QR code. Voucher not found.');
 });
 
 it('rejects an already redeemed voucher', function () {

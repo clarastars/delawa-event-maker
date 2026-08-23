@@ -37,13 +37,13 @@
                         @enderror
                     </div>
 
-                    <div x-data="{ eventId: '{{ old('event_id') }}', assignmentType: '{{ old('assignment_type', 'entries') }}' }">
+                    <div x-data="{ eventId: '{{ old('event_id', $events->first()?->id) }}', assignmentType: '{{ old('assignment_type', 'auto_assign') }}' }">
                         <div>
                             <label for="event_id" class="block text-sm font-semibold text-slate-700">Assign event access (optional)</label>
                             <select id="event_id" name="event_id" x-model="eventId" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20">
                                 <option value="">No event assignment</option>
                                 @foreach ($events as $event)
-                                    <option value="{{ $event->id }}">{{ $event->name }}</option>
+                                    <option value="{{ $event->id }}" @selected((string) old('event_id', $events->first()?->id) === (string) $event->id)>{{ $event->name }}</option>
                                 @endforeach
                             </select>
                             @error('event_id')
@@ -54,15 +54,15 @@
                         <div x-show="eventId" x-cloak class="mt-5">
                             <label for="assignment_type" class="block text-sm font-semibold text-slate-700">Assignment Type</label>
                             <select id="assignment_type" name="assignment_type" x-model="assignmentType" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20">
-                                <option value="entries">Allow product selection (Entries)</option>
                                 <option value="auto_assign">Auto-assign a general coupon immediately</option>
+                                <option value="entries">Allow product selection (Entries)</option>
                             </select>
                         </div>
 
-                        <div x-show="eventId && assignmentType === 'entries'" x-cloak class="mt-5">
+                        <div x-show="eventId" x-cloak class="mt-5">
                             <label for="entries" class="block text-sm font-semibold text-slate-700">Entries</label>
                             <input id="entries" name="entries" type="number" min="1" value="{{ old('entries', 1) }}" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20">
-                            <p class="mt-1 text-xs text-slate-500">How many products this user can pick for the event.</p>
+                            <p class="mt-1 text-xs text-slate-500" x-text="assignmentType === 'auto_assign' ? 'How many general vouchers to assign to this contact.' : 'How many products this user can pick for the event.'"></p>
                             @error('entries')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -90,13 +90,13 @@
                         @enderror
                     </div>
 
-                    <div x-data="{ eventId: '{{ old('event_id') }}', assignmentType: '{{ old('assignment_type', 'entries') }}' }">
+                    <div x-data="{ eventId: '{{ old('event_id', $events->first()?->id) }}', assignmentType: '{{ old('assignment_type', 'auto_assign') }}' }">
                         <div>
                             <label for="upload_event_id" class="block text-sm font-semibold text-slate-700">Assign event access (optional)</label>
                             <select id="upload_event_id" name="event_id" x-model="eventId" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20">
                                 <option value="">No event assignment</option>
                                 @foreach ($events as $event)
-                                    <option value="{{ $event->id }}">{{ $event->name }}</option>
+                                    <option value="{{ $event->id }}" @selected((string) old('event_id', $events->first()?->id) === (string) $event->id)>{{ $event->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -104,14 +104,15 @@
                         <div x-show="eventId" x-cloak class="mt-6">
                             <label for="upload_assignment_type" class="block text-sm font-semibold text-slate-700">Assignment Type</label>
                             <select id="upload_assignment_type" name="assignment_type" x-model="assignmentType" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20">
-                                <option value="entries">Allow product selection (Entries)</option>
                                 <option value="auto_assign">Auto-assign a general coupon immediately</option>
+                                <option value="entries">Allow product selection (Entries)</option>
                             </select>
                         </div>
 
-                        <div x-show="eventId && assignmentType === 'entries'" x-cloak class="mt-6">
+                        <div x-show="eventId" x-cloak class="mt-6">
                             <label for="upload_entries" class="block text-sm font-semibold text-slate-700">Entries</label>
-                            <input id="upload_entries" name="entries" type="number" min="1" value="1" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20">
+                            <input id="upload_entries" name="entries" type="number" min="1" value="{{ old('entries', 1) }}" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20">
+                            <p class="mt-1 text-xs text-slate-500" x-text="assignmentType === 'auto_assign' ? 'How many general vouchers to assign to each contact.' : 'How many products each user can pick for the event.'"></p>
                         </div>
                     </div>
 

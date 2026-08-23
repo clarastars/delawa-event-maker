@@ -1,4 +1,4 @@
-import { Html5Qrcode } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 
 document.addEventListener('DOMContentLoaded', function() {
     const startCameraButton = document.getElementById('start-camera');
@@ -19,10 +19,12 @@ document.addEventListener('DOMContentLoaded', function() {
         startCameraButton.classList.add('hidden');
         stopCameraButton.classList.remove('hidden');
         
-        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode = new Html5Qrcode("reader", {
+            formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+            verbose: false,
+        });
 
-        const qrCodeSuccessCallback = (decodedText, decodedResult) => {
-            // Found a barcode
+        const qrCodeSuccessCallback = (decodedText) => {
             inputField.value = decodedText;
             
             // Stop scanning and submit
@@ -34,8 +36,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         };
         
-        // Let's use environment facing camera
-        const config = { fps: 10, qrbox: { width: 250, height: 100 } };
+        // Square viewfinder sized for QR codes (not 1D barcode bars)
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
         
         html5QrCode.start(
             { facingMode: "environment" }, 

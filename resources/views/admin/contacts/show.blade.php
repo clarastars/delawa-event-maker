@@ -155,7 +155,7 @@
                                         </button>
                                     </form>
                                 </div>
-                                <svg data-voucher-barcode="{{ $voucher->voucher_id }}" class="mx-auto mt-4 h-12 w-full max-w-[14rem]" aria-hidden="true"></svg>
+                                <canvas data-voucher-qr="{{ $voucher->voucher_id }}" class="mx-auto mt-4 h-40 w-40" aria-hidden="true"></canvas>
                             </li>
                         @endforeach
                     </ul>

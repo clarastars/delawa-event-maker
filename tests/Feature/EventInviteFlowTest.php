@@ -157,6 +157,7 @@ test('contact with event entries can see products and claim a voucher', function
     $this->get(route('event.vouchers', ['event' => $event, 'lang' => 'en']))
         ->assertSuccessful()
         ->assertSee('GIFT-100')
+        ->assertSee('data-voucher-qr="GIFT-100"', false)
         ->assertDontSee('Choose your product');
 
     $this->assertDatabaseHas('vouchers', [
