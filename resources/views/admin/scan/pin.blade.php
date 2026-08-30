@@ -15,11 +15,13 @@
                 <input
                     id="pin"
                     name="pin"
-                    type="password"
+                    type="tel"
                     inputmode="numeric"
+                    pattern="[0-9]*"
                     autocomplete="one-time-code"
                     maxlength="8"
-                    class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-center text-2xl tracking-[0.4em] outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20"
+                    enterkeyhint="done"
+                    class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-center text-2xl tracking-[0.4em] outline-none [-webkit-text-security:disc] focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20"
                     required
                     autofocus
                 >

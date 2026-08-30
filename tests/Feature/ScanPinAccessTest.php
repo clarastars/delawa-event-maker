@@ -8,7 +8,10 @@ it('shows the pin page to guests', function () {
     $this->get(route('admin.scan.pin'))
         ->assertOk()
         ->assertSee('Scanner Access')
-        ->assertSee('Enter the scanner PIN');
+        ->assertSee('Enter the scanner PIN')
+        ->assertSee('type="tel"', false)
+        ->assertSee('inputmode="numeric"', false)
+        ->assertSee('pattern="[0-9]*"', false);
 });
 
 it('redirects guests from the scan page to the pin form', function () {
