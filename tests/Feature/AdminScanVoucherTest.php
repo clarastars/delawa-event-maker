@@ -17,14 +17,19 @@ it('shows the scan page for authenticated admin', function () {
         ->assertSee('Scan QR Code');
 });
 
-it('requires authentication to access scan page', function () {
-    $this->get(route('admin.scan.index'))
-        ->assertRedirect(route('admin.login'));
+it('shows the scan page after pin verification without login', function () {
+    $this->withSession(['scanner_pin_verified' => true])
+        ->get(route('admin.scan.index'))
+        ->assertOk()
+        ->assertSee('Scan QR Code');
 });
 
-it('can scan and redeem an active voucher', function () {
-    $user = User::factory()->create();
+it('requires pin verification to access scan page as guest', function () {
+    $this->get(route('admin.scan.index'))
+        ->assertRedirect(route('admin.scan.pin'));
+});
 
+it('can scan and redeem an active voucher with pin access', function () {
     $event = Event::create([
         'name' => 'Test Event',
         'slug' => 'test-event',
@@ -46,7 +51,7 @@ it('can scan and redeem an active voucher', function () {
         'expiry_date' => now()->addDays(5),
     ]);
 
-    $this->actingAs($user)
+    $this->withSession(['scanner_pin_verified' => true])
         ->post(route('admin.scan.store'), [
             'voucher_id' => '1234567890',
         ])
@@ -61,8 +66,6 @@ it('can scan and redeem an active voucher', function () {
 });
 
 it('zeroes remaining balance when redeeming a local voucher', function () {
-    $user = User::factory()->create();
-
     $event = Event::create([
         'name' => 'Test Event',
         'slug' => 'test-event-local',
@@ -80,7 +83,7 @@ it('zeroes remaining balance when redeeming a local voucher', function () {
         'remaining_balance' => 25,
     ]);
 
-    $this->actingAs($user)
+    $this->withSession(['scanner_pin_verified' => true])
         ->post(route('admin.scan.store'), [
             'voucher_id' => 'DLWSCAN0001',
         ])
@@ -93,9 +96,7 @@ it('zeroes remaining balance when redeeming a local voucher', function () {
 });
 
 it('rejects an invalid QR code', function () {
-    $user = User::factory()->create();
-
-    $this->actingAs($user)
+    $this->withSession(['scanner_pin_verified' => true])
         ->post(route('admin.scan.store'), [
             'voucher_id' => 'DOES_NOT_EXIST',
         ])
@@ -106,8 +107,6 @@ it('rejects an invalid QR code', function () {
 it('rejects an already redeemed voucher', function () {
     config(['app.timezone' => 'Asia/Riyadh']);
     date_default_timezone_set('Asia/Riyadh');
-
-    $user = User::factory()->create();
 
     $event = Event::create([
         'name' => 'Test Event',
@@ -124,7 +123,7 @@ it('rejects an already redeemed voucher', function () {
         'redeemed_at' => $redeemedAt,
     ]);
 
-    $this->actingAs($user)
+    $this->withSession(['scanner_pin_verified' => true])
         ->post(route('admin.scan.store'), [
             'voucher_id' => 'USED_CODE',
         ])
@@ -140,9 +139,8 @@ it('rejects an already redeemed voucher', function () {
 it('uses asia riyadh as the application timezone', function () {
     expect(config('app.timezone'))->toBe('Asia/Riyadh');
 });
-it('rejects an expired voucher', function () {
-    $user = User::factory()->create();
 
+it('rejects an expired voucher', function () {
     $event = Event::create([
         'name' => 'Test Event',
         'slug' => 'test-event-3',
@@ -156,7 +154,7 @@ it('rejects an expired voucher', function () {
         'expiry_date' => now()->subDay(),
     ]);
 
-    $this->actingAs($user)
+    $this->withSession(['scanner_pin_verified' => true])
         ->post(route('admin.scan.store'), [
             'voucher_id' => 'EXPIRED_CODE',
         ])

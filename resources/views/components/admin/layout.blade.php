@@ -42,6 +42,16 @@
                             <button class="rounded-full bg-slate-950 px-4 py-2 text-white">Log out</button>
                         </form>
                     </nav>
+                @else
+                    @if (session('scanner_pin_verified'))
+                        <nav class="flex flex-wrap items-center gap-3 text-sm font-semibold">
+                            <a href="{{ route('admin.scan.index') }}" class="rounded-full bg-white px-4 py-2 font-bold text-[#4E2E36] shadow-sm ring-1 ring-slate-200">Scanner</a>
+                            <form method="POST" action="{{ route('admin.scan.pin.lock') }}">
+                                @csrf
+                                <button class="rounded-full bg-slate-950 px-4 py-2 text-white">Lock</button>
+                            </form>
+                        </nav>
+                    @endif
                 @endauth
             </header>
 

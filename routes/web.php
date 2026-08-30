@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\ScanController;
+use App\Http\Controllers\Admin\ScanPinController;
 use App\Http\Controllers\Admin\TeamController;
 use App\Http\Controllers\Admin\VoucherController;
 use App\Http\Controllers\Admin\VoucherGenerateController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Admin\VoucherUploadController;
 use App\Http\Controllers\EventEndedController;
 use App\Http\Controllers\EventInviteController;
 use App\Http\Middleware\EnsureEventIsOpen;
+use App\Http\Middleware\EnsureScannerPinIsVerified;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Support\Facades\Route;
 
@@ -45,6 +47,17 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::post('/login', [AuthController::class, 'store'])->name('login.store');
     });
 
+    Route::get('/scan/pin', [ScanPinController::class, 'create'])->name('scan.pin');
+    Route::post('/scan/pin', [ScanPinController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('scan.pin.store');
+    Route::post('/scan/pin/lock', [ScanPinController::class, 'destroy'])->name('scan.pin.lock');
+
+    Route::middleware(EnsureScannerPinIsVerified::class)->group(function (): void {
+        Route::get('/scan', [ScanController::class, 'index'])->name('scan.index');
+        Route::post('/scan', [ScanController::class, 'store'])->name('scan.store');
+    });
+
     Route::middleware('auth')->group(function (): void {
         Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
 
@@ -55,9 +68,6 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
 
             return redirect()->route('admin.events.index');
         })->name('dashboard');
-
-        Route::get('/scan', [ScanController::class, 'index'])->name('scan.index');
-        Route::post('/scan', [ScanController::class, 'store'])->name('scan.store');
 
         Route::middleware(EnsureUserIsAdmin::class)->group(function (): void {
             Route::resource('events', EventController::class)->except(['edit']);
