@@ -101,6 +101,7 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
             Route::put('/contacts/{contact}/events/{event}/entries', [ContactController::class, 'updateEntries'])->name('contacts.update-entries');
             Route::delete('/contacts/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy');
             Route::post('/contacts/{contact}/assign-voucher', [ContactController::class, 'assignVoucher'])->name('contacts.assign-voucher');
+            Route::post('/contacts/{contact}/vouchers/{voucher}/redeem', [ContactController::class, 'redeemVoucher'])->name('contacts.redeem-voucher');
             Route::delete('/contacts/{contact}/vouchers/{voucher}', [ContactController::class, 'unassignVoucher'])->name('contacts.unassign-voucher');
 
             Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');

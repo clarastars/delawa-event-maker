@@ -72,6 +72,28 @@ class Voucher extends Model
         return $this->source === self::SOURCE_TSEPASS;
     }
 
+    public function isRedeemable(): bool
+    {
+        if ($this->status !== self::STATUS_ACTIVE) {
+            return false;
+        }
+
+        if ($this->expiry_date === null) {
+            return true;
+        }
+
+        return $this->expiry_date->toDateString() >= now()->toDateString();
+    }
+
+    public function markAsRedeemed(): bool
+    {
+        return $this->update([
+            'status' => self::STATUS_REDEEMED,
+            'redeemed_at' => now(),
+            'remaining_balance' => 0,
+        ]);
+    }
+
     /**
      * Remaining balance for display: local uses stored value; callers should use GiftCardBalance for tsepass.
      */

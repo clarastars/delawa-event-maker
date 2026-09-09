@@ -173,4 +173,25 @@ class ContactController extends Controller
             ->route('admin.contacts.show', $contact)
             ->with('status', "Voucher {$voucher->voucher_id} unassigned.");
     }
+
+    public function redeemVoucher(Contact $contact, Voucher $voucher): RedirectResponse
+    {
+        if ($voucher->contact_id !== $contact->id) {
+            return redirect()
+                ->route('admin.contacts.index')
+                ->withErrors(['voucher_id' => 'This voucher is not assigned to this contact.']);
+        }
+
+        if (! $voucher->isRedeemable()) {
+            return redirect()
+                ->back()
+                ->withErrors(['voucher_id' => "Voucher {$voucher->voucher_id} cannot be marked as consumed."]);
+        }
+
+        $voucher->markAsRedeemed();
+
+        return redirect()
+            ->back()
+            ->with('status', "Voucher {$voucher->voucher_id} marked as consumed.");
+    }
 }

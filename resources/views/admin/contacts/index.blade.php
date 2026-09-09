@@ -15,6 +15,12 @@
             </div>
         </div>
 
+        @if ($errors->has('voucher_id'))
+            <div class="mb-6 rounded-2xl bg-red-50 p-4 text-sm font-medium text-red-900 ring-1 ring-red-200">
+                {{ $errors->first('voucher_id') }}
+            </div>
+        @endif
+
         <form method="GET" action="{{ route('admin.contacts.index') }}" class="mb-6">
             <div class="flex flex-col gap-3 sm:flex-row">
                 <input
@@ -72,9 +78,23 @@
                             </td>
                             <td class="px-4 py-4">
                                 @if ($contact->vouchers->isNotEmpty())
-                                    <div class="flex flex-wrap gap-1">
+                                    <div class="flex flex-col gap-2">
                                         @foreach ($contact->vouchers as $voucher)
-                                            <x-admin.voucher-balance-crumb :voucher="$voucher" />
+                                            <div class="flex flex-wrap items-center gap-1.5">
+                                                <x-admin.voucher-balance-crumb :voucher="$voucher" />
+                                                @if ($voucher->isRedeemable())
+                                                    <form
+                                                        method="POST"
+                                                        action="{{ route('admin.contacts.redeem-voucher', [$contact, $voucher]) }}"
+                                                        onsubmit="return confirm('Mark coupon {{ $voucher->voucher_id }} as consumed? This cannot be undone.')"
+                                                    >
+                                                        @csrf
+                                                        <button type="submit" class="rounded-full bg-[#7D4651]/10 px-2.5 py-1 text-[11px] font-bold text-[#4E2E36] ring-1 ring-[#7D4651]/20 hover:bg-[#7D4651]/20">
+                                                            Mark consumed
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </div>
                                         @endforeach
                                     </div>
                                 @else

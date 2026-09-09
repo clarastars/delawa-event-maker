@@ -722,3 +722,131 @@ test('admin can delete a contact and unassign its vouchers', function () {
         'contact_id' => null,
     ]);
 });
+
+test('admin contacts index shows mark consumed button for redeemable vouchers', function () {
+    $admin = User::factory()->create();
+
+    $contact = Contact::create([
+        'name' => 'Sara Ahmed',
+        'phone' => '0551234567',
+        'phone_normalized' => Contact::normalizePhone('0551234567'),
+    ]);
+
+    $activeVoucher = Voucher::create([
+        'voucher_id' => 'EG-ACTIVE-100',
+        'creation_date' => now()->toDateString(),
+        'balance' => 24,
+        'remaining_balance' => 24,
+        'status' => Voucher::STATUS_ACTIVE,
+        'one_time_redemption' => true,
+        'contact_id' => $contact->id,
+    ]);
+
+    Voucher::create([
+        'voucher_id' => 'EG-USED-100',
+        'creation_date' => now()->toDateString(),
+        'balance' => 24,
+        'remaining_balance' => 0,
+        'status' => Voucher::STATUS_REDEEMED,
+        'redeemed_at' => now(),
+        'one_time_redemption' => true,
+        'contact_id' => $contact->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.contacts.index'))
+        ->assertSuccessful()
+        ->assertSee('Mark consumed')
+        ->assertSee(route('admin.contacts.redeem-voucher', [$contact, $activeVoucher]), false);
+});
+
+test('admin can mark a contact voucher as consumed from the contacts index', function () {
+    $admin = User::factory()->create();
+
+    $contact = Contact::create([
+        'name' => 'Sara Ahmed',
+        'phone' => '0551234567',
+        'phone_normalized' => Contact::normalizePhone('0551234567'),
+    ]);
+
+    $voucher = Voucher::create([
+        'voucher_id' => 'EG-SA-100',
+        'creation_date' => now()->toDateString(),
+        'balance' => 24,
+        'remaining_balance' => 24,
+        'status' => Voucher::STATUS_ACTIVE,
+        'one_time_redemption' => true,
+        'contact_id' => $contact->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->from(route('admin.contacts.index'))
+        ->post(route('admin.contacts.redeem-voucher', [$contact, $voucher]))
+        ->assertRedirect(route('admin.contacts.index'))
+        ->assertSessionHas('status', 'Voucher EG-SA-100 marked as consumed.');
+
+    expect($voucher->fresh())
+        ->status->toBe(Voucher::STATUS_REDEEMED)
+        ->remaining_balance->toEqual(0.0)
+        ->redeemed_at->not->toBeNull();
+});
+
+test('admin cannot mark another contact voucher as consumed', function () {
+    $admin = User::factory()->create();
+
+    $contact = Contact::create([
+        'name' => 'Sara Ahmed',
+        'phone' => '0551234567',
+        'phone_normalized' => Contact::normalizePhone('0551234567'),
+    ]);
+
+    $otherContact = Contact::create([
+        'name' => 'Omar Ali',
+        'phone' => '0559876543',
+        'phone_normalized' => Contact::normalizePhone('0559876543'),
+    ]);
+
+    $voucher = Voucher::create([
+        'voucher_id' => 'EG-SA-100',
+        'creation_date' => now()->toDateString(),
+        'balance' => 24,
+        'remaining_balance' => 24,
+        'status' => Voucher::STATUS_ACTIVE,
+        'one_time_redemption' => true,
+        'contact_id' => $otherContact->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.contacts.redeem-voucher', [$contact, $voucher]))
+        ->assertRedirect(route('admin.contacts.index'))
+        ->assertSessionHasErrors('voucher_id');
+
+    expect($voucher->fresh()->status)->toBe(Voucher::STATUS_ACTIVE);
+});
+
+test('admin cannot mark an already redeemed voucher as consumed', function () {
+    $admin = User::factory()->create();
+
+    $contact = Contact::create([
+        'name' => 'Sara Ahmed',
+        'phone' => '0551234567',
+        'phone_normalized' => Contact::normalizePhone('0551234567'),
+    ]);
+
+    $voucher = Voucher::create([
+        'voucher_id' => 'EG-USED-100',
+        'creation_date' => now()->toDateString(),
+        'balance' => 24,
+        'remaining_balance' => 0,
+        'status' => Voucher::STATUS_REDEEMED,
+        'redeemed_at' => now()->subHour(),
+        'one_time_redemption' => true,
+        'contact_id' => $contact->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->from(route('admin.contacts.index'))
+        ->post(route('admin.contacts.redeem-voucher', [$contact, $voucher]))
+        ->assertRedirect(route('admin.contacts.index'))
+        ->assertSessionHasErrors('voucher_id');
+});
