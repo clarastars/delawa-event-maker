@@ -21,6 +21,7 @@ class EventRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'maps_link' => ['nullable', 'url', 'max:2000'],
             'maps_link_label' => ['nullable', 'string', 'max:255'],
+            'terms' => ['nullable', 'string', 'max:10000'],
         ];
     }
 }

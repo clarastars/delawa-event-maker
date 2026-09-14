@@ -22,6 +22,7 @@ class EventFactory extends Factory
             'name' => fake()->words(3, true),
             'slug' => Str::lower(Str::random(8)),
             'banner_path' => null,
+            'terms' => null,
             'closed_at' => null,
             'closed_by_user_id' => null,
             'closure_observations' => null,

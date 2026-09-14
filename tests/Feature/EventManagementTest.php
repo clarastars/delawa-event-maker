@@ -37,7 +37,8 @@ test('admin event page shows the public invite link', function () {
         ->get(route('admin.events.show', $event))
         ->assertSuccessful()
         ->assertSee($event->name)
-        ->assertSee(route('event.invite', $event));
+        ->assertSee(route('event.invite', $event))
+        ->assertSee('Terms / الشروط');
 });
 
 test('admin can upload and replace an event banner', function () {
@@ -95,6 +96,34 @@ test('admin can rename an event and update maps link', function () {
     expect($event->fresh()->name)->toBe('New Name')
         ->and($event->fresh()->maps_link)->toBe('https://maps.google.com/test')
         ->and($event->fresh()->maps_link_label)->toBe('View on Maps');
+});
+
+test('admin can update event terms', function () {
+    $admin = User::factory()->create();
+    $event = Event::factory()->create();
+
+    $this->actingAs($admin)
+        ->put(route('admin.events.update', $event), [
+            'name' => $event->name,
+            'terms' => "Line one\nLine two",
+        ])
+        ->assertRedirect(route('admin.events.show', $event));
+
+    expect($event->fresh()->terms)->toBe("Line one\nLine two");
+});
+
+test('admin can clear event terms', function () {
+    $admin = User::factory()->create();
+    $event = Event::factory()->create(['terms' => 'Existing terms']);
+
+    $this->actingAs($admin)
+        ->put(route('admin.events.update', $event), [
+            'name' => $event->name,
+            'terms' => '',
+        ])
+        ->assertRedirect(route('admin.events.show', $event));
+
+    expect($event->fresh()->terms)->toBeNull();
 });
 
 test('admin cannot delete an event that still has vouchers', function () {

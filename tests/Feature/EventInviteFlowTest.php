@@ -25,6 +25,42 @@ test('event invite page shows the uploaded banner', function () {
         ->assertSee('event-banners/banner.png', false);
 });
 
+test('event invite page shows terms with line breaks', function () {
+    $event = Event::factory()->create([
+        'terms' => "First line\nSecond line",
+    ]);
+
+    $this->get(route('event.invite', ['event' => $event, 'lang' => 'en']))
+        ->assertSuccessful()
+        ->assertSee('Terms')
+        ->assertSee('First line')
+        ->assertSee('Second line')
+        ->assertSee('whitespace-pre-line', false);
+
+    $this->get(route('event.invite', ['event' => $event, 'lang' => 'ar']))
+        ->assertSuccessful()
+        ->assertSee('الشروط');
+});
+
+test('event invite page hides terms when they are empty', function () {
+    $event = Event::factory()->create(['terms' => null]);
+
+    $this->get(route('event.invite', ['event' => $event, 'lang' => 'en']))
+        ->assertSuccessful()
+        ->assertDontSee('>Terms</h2>', false);
+});
+
+test('event invite page escapes html in terms', function () {
+    $event = Event::factory()->create([
+        'terms' => '<script>alert(1)</script>',
+    ]);
+
+    $this->get(route('event.invite', $event))
+        ->assertSuccessful()
+        ->assertDontSee('<script>alert(1)</script>', false)
+        ->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;', false);
+});
+
 test('unknown event slug returns 404', function () {
     $this->get('/e/nope1234')->assertNotFound();
 });

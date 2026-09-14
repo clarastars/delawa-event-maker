@@ -17,6 +17,7 @@ use Illuminate\Support\Str;
     'slug',
     'maps_link',
     'maps_link_label',
+    'terms',
     'banner_path',
     'closed_at',
     'closed_by_user_id',

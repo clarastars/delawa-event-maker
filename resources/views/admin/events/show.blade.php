@@ -158,6 +158,21 @@
                             @enderror
                         </div>
 
+                        <div>
+                            <label for="terms" class="block text-xs font-semibold text-slate-500 mb-1">Terms / الشروط</label>
+                            <textarea
+                                id="terms"
+                                name="terms"
+                                rows="6"
+                                dir="auto"
+                                placeholder="These terms will appear on the public event page. Line breaks are kept."
+                                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20"
+                            >{{ old('terms', $event->terms) }}</textarea>
+                            @error('terms')
+                                <p class="mt-1 text-sm font-medium text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <button class="w-full rounded-2xl bg-[#7D4651] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#7D4651]/25 hover:bg-[#6A3A44]">
                             Save details
                         </button>

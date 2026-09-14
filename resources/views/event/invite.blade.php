@@ -18,6 +18,7 @@
             'otp_hint' => 'Enter the code sent to your phone to view your coupons.',
             'not_found' => 'We could not find an active coupon for this phone number. Please check your number or contact the store team.',
             'debug_otp' => 'Debug mode on: use :code for OTP',
+            'terms' => 'Terms',
         ],
         'ar' => [
             'switch' => 'English',
@@ -37,6 +38,7 @@
             'otp_hint' => 'أدخل الرمز المرسل إلى جوالك لعرض قسائمك.',
             'not_found' => 'لم نجد قسيمة فعالة لهذا الرقم. يرجى التأكد من رقم الجوال أو التواصل مع فريق المتجر.',
             'debug_otp' => 'وضع التطوير مفعّل: استخدم :code لرمز التحقق',
+            'terms' => 'الشروط',
         ],
     ][$locale];
 
@@ -257,6 +259,13 @@
                     @if ($searched)
                         <div class="mt-6 rounded-2xl bg-amber-50 p-4 text-sm font-medium text-amber-900 ring-1 ring-amber-200">
                             {{ $copy['not_found'] }}
+                        </div>
+                    @endif
+
+                    @if (filled($event->terms))
+                        <div class="mt-6 border-t border-slate-200 pt-5">
+                            <h2 class="text-sm font-semibold text-slate-700">{{ $copy['terms'] }}</h2>
+                            <p dir="auto" class="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">{{ $event->terms }}</p>
                         </div>
                     @endif
                 </div>
