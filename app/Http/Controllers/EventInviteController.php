@@ -135,6 +135,20 @@ class EventInviteController extends Controller
 
         $contact->markAsActivated();
 
+        if (! $event->vouchersAreViewable()) {
+            return view('event.vouchers', [
+                'locale' => $this->locale($request),
+                'event' => $event,
+                'contact' => $contact,
+                'vouchers' => collect(),
+                'remainingEntries' => 0,
+                'products' => collect(),
+                'hasReview' => true,
+                'remainingBalances' => collect(),
+                'vouchersAreViewable' => false,
+            ]);
+        }
+
         $entriesAllowed = 0;
         $pivot = $contact->events()->where('event_id', $event->id)->first()?->pivot;
         if ($pivot) {
@@ -165,6 +179,7 @@ class EventInviteController extends Controller
                     ? $voucher->storedRemainingBalance()
                     : $giftCardBalance->remainingBalance($voucher->voucher_id),
             ]),
+            'vouchersAreViewable' => true,
         ]);
     }
 
@@ -177,6 +192,10 @@ class EventInviteController extends Controller
             session()->forget($this->verifiedKey($event));
 
             return redirect()->route('event.invite', ['event' => $event, 'lang' => $this->locale($request)]);
+        }
+
+        if (! $event->vouchersAreViewable()) {
+            return redirect()->route('event.vouchers', ['event' => $event, 'lang' => $this->locale($request)]);
         }
 
         $vouchers = $this->redeemableVouchers($contact, $event);

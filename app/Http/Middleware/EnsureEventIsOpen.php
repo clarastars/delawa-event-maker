@@ -16,7 +16,7 @@ class EnsureEventIsOpen
     {
         $event = $request->route('event');
 
-        if ($event instanceof Event && $event->isClosed()) {
+        if ($event instanceof Event && ($event->isClosed() || $event->hasEnded())) {
             $locale = $request->query('lang') === 'en' || $request->input('lang') === 'en' ? 'en' : 'ar';
 
             return response()->view('event-ended', [

@@ -5,6 +5,7 @@ use App\Models\Contact;
 use App\Models\Event;
 use App\Models\Voucher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 
 uses(RefreshDatabase::class);
 
@@ -238,4 +239,189 @@ test('vouchers page redirects to the invite form without a verified session', fu
 
     $this->get(route('event.vouchers', $event))
         ->assertRedirect(route('event.invite', ['event' => $event, 'lang' => 'ar']));
+});
+
+test('invite and otp still work before the event starts', function () {
+    $this->travelTo(Carbon::parse('2026-09-21 23:00:00', 'Asia/Riyadh'));
+
+    $this->mock(Otp::class, function ($mock): void {
+        $mock->shouldReceive('send')->once()->with('+966551234567');
+        $mock->shouldReceive('verify')->once()->with('+966551234567', '1234')->andReturn(true);
+    });
+
+    $event = Event::factory()->create([
+        'starts_at' => '2026-09-22 00:00:00',
+        'ends_at' => '2026-09-23 00:00:00',
+    ]);
+
+    $contact = Contact::create([
+        'name' => 'Sara',
+        'phone' => '+966 55 123 4567',
+        'phone_normalized' => Contact::normalizePhone('+966 55 123 4567'),
+    ]);
+
+    Voucher::create([
+        'contact_id' => $contact->id,
+        'event_id' => $event->id,
+        'voucher_id' => 'EG-SA-100',
+        'creation_date' => now()->toDateString(),
+        'balance' => 250,
+        'status' => Voucher::STATUS_ACTIVE,
+        'one_time_redemption' => true,
+    ]);
+
+    $this->get(route('event.invite', ['event' => $event, 'lang' => 'en']))
+        ->assertSuccessful()
+        ->assertSee('Send verification code')
+        ->assertDontSee('This event has ended');
+
+    $this->post(route('event.otp.send', $event), [
+        'name' => 'Sara',
+        'phone' => '+966 55 123 4567',
+        'lang' => 'en',
+    ])->assertRedirect(route('event.invite', ['event' => $event, 'lang' => 'en']));
+
+    $this->post(route('event.otp.verify', $event), [
+        'otp' => '1234',
+        'lang' => 'en',
+    ])->assertRedirect(route('event.vouchers', ['event' => $event, 'lang' => 'en']));
+});
+
+test('logged in guest does not see vouchers before the event starts', function () {
+    $this->travelTo(Carbon::parse('2026-09-21 23:00:00', 'Asia/Riyadh'));
+
+    $event = Event::factory()->create([
+        'starts_at' => '2026-09-22 00:00:00',
+        'ends_at' => '2026-09-23 00:00:00',
+    ]);
+
+    $contact = Contact::create([
+        'name' => 'Sara',
+        'phone' => '+966 55 123 4567',
+        'phone_normalized' => Contact::normalizePhone('+966 55 123 4567'),
+    ]);
+
+    Voucher::create([
+        'contact_id' => $contact->id,
+        'event_id' => $event->id,
+        'voucher_id' => 'EG-SA-100',
+        'creation_date' => now()->toDateString(),
+        'balance' => 250,
+        'status' => Voucher::STATUS_ACTIVE,
+        'one_time_redemption' => true,
+    ]);
+
+    $this->withSession([
+        "event_invite.{$event->id}.verified_contact_id" => $contact->id,
+    ])->get(route('event.vouchers', ['event' => $event, 'lang' => 'en']))
+        ->assertSuccessful()
+        ->assertSee('Vouchers will be available to view from')
+        ->assertSee('Tuesday, 22 September 2026, 12:00 AM')
+        ->assertDontSee('EG-SA-100');
+
+    $this->withSession([
+        "event_invite.{$event->id}.verified_contact_id" => $contact->id,
+    ])->get(route('event.vouchers', ['event' => $event, 'lang' => 'ar']))
+        ->assertSuccessful()
+        ->assertSee('ستتوفر القسائم للعرض ابتداءً من')
+        ->assertDontSee('EG-SA-100');
+});
+
+test('logged in guest sees vouchers during the scheduled window', function () {
+    $this->travelTo(Carbon::parse('2026-09-22 10:00:00', 'Asia/Riyadh'));
+
+    $event = Event::factory()->create([
+        'starts_at' => '2026-09-22 00:00:00',
+        'ends_at' => '2026-09-23 00:00:00',
+    ]);
+
+    $contact = Contact::create([
+        'name' => 'Sara',
+        'phone' => '+966 55 123 4567',
+        'phone_normalized' => Contact::normalizePhone('+966 55 123 4567'),
+    ]);
+
+    Voucher::create([
+        'contact_id' => $contact->id,
+        'event_id' => $event->id,
+        'voucher_id' => 'EG-SA-100',
+        'creation_date' => now()->toDateString(),
+        'balance' => 250,
+        'status' => Voucher::STATUS_ACTIVE,
+        'one_time_redemption' => true,
+    ]);
+
+    $this->withSession([
+        "event_invite.{$event->id}.verified_contact_id" => $contact->id,
+    ])->get(route('event.vouchers', ['event' => $event, 'lang' => 'en']))
+        ->assertSuccessful()
+        ->assertSee('EG-SA-100')
+        ->assertDontSee('Vouchers will be available to view from');
+});
+
+test('events without start and end dates still show vouchers after login', function () {
+    $event = Event::factory()->create([
+        'starts_at' => null,
+        'ends_at' => null,
+    ]);
+
+    $contact = Contact::create([
+        'name' => 'Sara',
+        'phone' => '+966 55 123 4567',
+        'phone_normalized' => Contact::normalizePhone('+966 55 123 4567'),
+    ]);
+
+    Voucher::create([
+        'contact_id' => $contact->id,
+        'event_id' => $event->id,
+        'voucher_id' => 'EG-SA-100',
+        'creation_date' => now()->toDateString(),
+        'balance' => 250,
+        'status' => Voucher::STATUS_ACTIVE,
+        'one_time_redemption' => true,
+    ]);
+
+    $this->withSession([
+        "event_invite.{$event->id}.verified_contact_id" => $contact->id,
+    ])->get(route('event.vouchers', ['event' => $event, 'lang' => 'en']))
+        ->assertSuccessful()
+        ->assertSee('EG-SA-100');
+});
+
+test('claiming a product before the event starts does not assign a voucher', function () {
+    $this->travelTo(Carbon::parse('2026-09-21 23:00:00', 'Asia/Riyadh'));
+
+    $event = Event::factory()->create([
+        'starts_at' => '2026-09-22 00:00:00',
+        'ends_at' => '2026-09-23 00:00:00',
+    ]);
+    $product = $event->products()->create([
+        'name' => 'Gift Box',
+    ]);
+
+    $contact = Contact::create([
+        'name' => 'Sara',
+        'phone' => '+966 55 123 4567',
+        'phone_normalized' => Contact::normalizePhone('+966 55 123 4567'),
+    ]);
+
+    $contact->events()->attach($event, ['entries' => 1]);
+
+    $voucher = Voucher::create([
+        'contact_id' => null,
+        'event_id' => $event->id,
+        'product_id' => $product->id,
+        'voucher_id' => 'GIFT-100',
+        'creation_date' => now()->toDateString(),
+        'balance' => 250,
+        'status' => Voucher::STATUS_ACTIVE,
+        'one_time_redemption' => true,
+    ]);
+
+    $this->withSession([
+        "event_invite.{$event->id}.verified_contact_id" => $contact->id,
+    ])->post(route('event.products.claim', ['event' => $event, 'product' => $product, 'lang' => 'en']))
+        ->assertRedirect(route('event.vouchers', ['event' => $event, 'lang' => 'en']));
+
+    expect($voucher->fresh()->contact_id)->toBeNull();
 });

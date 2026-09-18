@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Voucher;
 use App\Services\EventClosureMetrics;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
@@ -249,4 +250,18 @@ test('public invite routes show event ended page for closed events', function ()
     $this->get(route('event.invite', $event))
         ->assertSuccessful()
         ->assertViewIs('event-ended');
+});
+
+test('public invite routes show event ended page after the scheduled end', function () {
+    $this->travelTo(Carbon::parse('2026-09-23 00:00:00', 'Asia/Riyadh'));
+
+    $event = Event::factory()->create([
+        'starts_at' => '2026-09-22 00:00:00',
+        'ends_at' => '2026-09-23 00:00:00',
+    ]);
+
+    $this->get(route('event.invite', $event))
+        ->assertSuccessful()
+        ->assertViewIs('event-ended')
+        ->assertSee('انتهى الحدث');
 });

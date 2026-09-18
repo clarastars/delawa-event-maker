@@ -14,6 +14,8 @@
             'review_title' => 'Write your experience',
             'review_prompt' => 'Tell us about your experience with this event...',
             'submit_review' => 'Submit',
+            'available_from' => 'Vouchers will be available to view from :datetime.',
+            'ended' => 'This event has ended. Vouchers are no longer available to view.',
         ],
         'ar' => [
             'title' => 'قسائمك',
@@ -29,6 +31,8 @@
             'review_title' => 'اكتب تجربتك',
             'review_prompt' => 'أخبرنا عن تجربتك في هذه الفعالية...',
             'submit_review' => 'إرسال',
+            'available_from' => 'ستتوفر القسائم للعرض ابتداءً من :datetime.',
+            'ended' => 'انتهت هذه الفعالية. لم تعد القسائم متاحة للعرض.',
         ],
     ][$locale];
 
@@ -38,9 +42,17 @@
         ? str_replace(':name', $contact->name, $copy['greeting'])
         : $copy['greeting_guest'];
 
-    $intro = $vouchers->count() > 0 ? ($vouchers->count() === 1
-        ? str_replace(':event', $event->name, $copy['intro_one'])
-        : str_replace([':count', ':event'], [(string) $vouchers->count(), $event->name], $copy['intro_many'])) : str_replace(':event', $event->name, $copy['intro_one']);
+    $vouchersAreViewable = $vouchersAreViewable ?? $event->vouchersAreViewable();
+
+    $intro = ! $vouchersAreViewable
+        ? (
+            ! $event->hasStarted() && $event->starts_at
+                ? str_replace(':datetime', $event->formattedStartsAt($locale) ?? '', $copy['available_from'])
+                : $copy['ended']
+        )
+        : ($vouchers->count() > 0 ? ($vouchers->count() === 1
+            ? str_replace(':event', $event->name, $copy['intro_one'])
+            : str_replace([':count', ':event'], [(string) $vouchers->count(), $event->name], $copy['intro_many'])) : str_replace(':event', $event->name, $copy['intro_one']));
 @endphp
 
 <!DOCTYPE html>
@@ -87,7 +99,9 @@
             <div class="w-full max-w-lg">
                 <header class="mb-8 text-center text-white">
                     <h1 class="text-2xl font-black">{{ $greeting }}</h1>
-                    <p class="mt-2 text-sm font-medium text-white/90">{{ $intro }}</p>
+                    @if ($vouchersAreViewable)
+                        <p class="mt-2 text-sm font-medium text-white/90">{{ $intro }}</p>
+                    @endif
                 </header>
 
                 @if ($event->bannerUrl())
@@ -111,6 +125,12 @@
                     </div>
                 @endif
                 
+                @if (! $vouchersAreViewable)
+                    <div class="mb-8 w-full overflow-hidden rounded-[2rem] bg-white p-6 shadow-2xl shadow-slate-900/25 ring-1 ring-white/60">
+                        <p class="text-center text-base font-semibold leading-7 text-slate-700">{{ $intro }}</p>
+                    </div>
+                @endif
+
                 @error('product')
                     <div class="mb-6 rounded-2xl bg-red-50 p-4 text-sm font-medium text-red-800 ring-1 ring-red-200">
                         {{ $message }}

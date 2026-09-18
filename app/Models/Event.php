@@ -18,6 +18,8 @@ use Illuminate\Support\Str;
     'maps_link',
     'maps_link_label',
     'terms',
+    'starts_at',
+    'ends_at',
     'banner_path',
     'closed_at',
     'closed_by_user_id',
@@ -58,6 +60,40 @@ class Event extends Model
         return $this->closed_at !== null;
     }
 
+    public function hasStarted(): bool
+    {
+        return $this->starts_at === null || now()->gte($this->starts_at);
+    }
+
+    public function hasEnded(): bool
+    {
+        return $this->ends_at !== null && now()->gte($this->ends_at);
+    }
+
+    public function vouchersAreViewable(): bool
+    {
+        return $this->hasStarted() && ! $this->hasEnded() && ! $this->isClosed();
+    }
+
+    public function formattedStartsAt(string $locale): ?string
+    {
+        if ($this->starts_at === null) {
+            return null;
+        }
+
+        $date = $this->starts_at->copy()->timezone(config('app.timezone'));
+
+        if ($locale === 'ar') {
+            return strtr(
+                $date->locale('ar')->translatedFormat('l، d F Y، h:i A'),
+                '0123456789',
+                '٠١٢٣٤٥٦٧٨٩',
+            );
+        }
+
+        return $date->locale('en')->translatedFormat('l, d F Y, g:i A');
+    }
+
     public function scopeOpen(Builder $query): Builder
     {
         return $query->whereNull('closed_at');
@@ -66,6 +102,8 @@ class Event extends Model
     protected function casts(): array
     {
         return [
+            'starts_at' => 'datetime',
+            'ends_at' => 'datetime',
             'closed_at' => 'datetime',
         ];
     }

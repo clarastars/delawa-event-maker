@@ -173,6 +173,36 @@
                             @enderror
                         </div>
 
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label for="starts_at" class="block text-xs font-semibold text-slate-500 mb-1">Starts at (GMT+3 / Asia/Riyadh)</label>
+                                <input
+                                    id="starts_at"
+                                    type="datetime-local"
+                                    name="starts_at"
+                                    value="{{ old('starts_at', $event->starts_at?->timezone(config('app.timezone'))->format('Y-m-d\TH:i')) }}"
+                                    class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20"
+                                >
+                                @error('starts_at')
+                                    <p class="mt-1 text-sm font-medium text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div>
+                                <label for="ends_at" class="block text-xs font-semibold text-slate-500 mb-1">Ends at (GMT+3 / Asia/Riyadh)</label>
+                                <input
+                                    id="ends_at"
+                                    type="datetime-local"
+                                    name="ends_at"
+                                    value="{{ old('ends_at', $event->ends_at?->timezone(config('app.timezone'))->format('Y-m-d\TH:i')) }}"
+                                    class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none focus:border-[#7D4651] focus:ring-4 focus:ring-[#7D4651]/20"
+                                >
+                                @error('ends_at')
+                                    <p class="mt-1 text-sm font-medium text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                        <p class="text-xs font-medium text-slate-500">Leave blank to show vouchers immediately after login. After the end time, guests see the event-ended page.</p>
+
                         <button class="w-full rounded-2xl bg-[#7D4651] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#7D4651]/25 hover:bg-[#6A3A44]">
                             Save details
                         </button>

@@ -38,7 +38,9 @@ test('admin event page shows the public invite link', function () {
         ->assertSuccessful()
         ->assertSee($event->name)
         ->assertSee(route('event.invite', $event))
-        ->assertSee('Terms / الشروط');
+        ->assertSee('Terms / الشروط')
+        ->assertSee('Starts at (GMT+3 / Asia/Riyadh)')
+        ->assertSee('Ends at (GMT+3 / Asia/Riyadh)');
 });
 
 test('admin can upload and replace an event banner', function () {
@@ -124,6 +126,56 @@ test('admin can clear event terms', function () {
         ->assertRedirect(route('admin.events.show', $event));
 
     expect($event->fresh()->terms)->toBeNull();
+});
+
+test('admin can save event start and end datetimes in the app timezone', function () {
+    $admin = User::factory()->create();
+    $event = Event::factory()->create();
+
+    $this->actingAs($admin)
+        ->put(route('admin.events.update', $event), [
+            'name' => $event->name,
+            'starts_at' => '2026-09-22T00:00',
+            'ends_at' => '2026-09-23T00:00',
+        ])
+        ->assertRedirect(route('admin.events.show', $event));
+
+    $event->refresh();
+
+    expect($event->starts_at->timezone('Asia/Riyadh')->format('Y-m-d H:i:s'))->toBe('2026-09-22 00:00:00')
+        ->and($event->ends_at->timezone('Asia/Riyadh')->format('Y-m-d H:i:s'))->toBe('2026-09-23 00:00:00');
+});
+
+test('admin cannot set event end before start', function () {
+    $admin = User::factory()->create();
+    $event = Event::factory()->create();
+
+    $this->actingAs($admin)
+        ->put(route('admin.events.update', $event), [
+            'name' => $event->name,
+            'starts_at' => '2026-09-23T00:00',
+            'ends_at' => '2026-09-22T00:00',
+        ])
+        ->assertSessionHasErrors('ends_at');
+});
+
+test('admin can clear event start and end datetimes', function () {
+    $admin = User::factory()->create();
+    $event = Event::factory()->create([
+        'starts_at' => '2026-09-22 00:00:00',
+        'ends_at' => '2026-09-23 00:00:00',
+    ]);
+
+    $this->actingAs($admin)
+        ->put(route('admin.events.update', $event), [
+            'name' => $event->name,
+            'starts_at' => '',
+            'ends_at' => '',
+        ])
+        ->assertRedirect(route('admin.events.show', $event));
+
+    expect($event->fresh()->starts_at)->toBeNull()
+        ->and($event->fresh()->ends_at)->toBeNull();
 });
 
 test('admin cannot delete an event that still has vouchers', function () {
