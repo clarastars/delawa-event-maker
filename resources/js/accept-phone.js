@@ -89,7 +89,7 @@ function buildE164FromVisible(iti, input) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('accept-phone-form');
+    const form = document.getElementById('accept-phone-form') ?? document.getElementById('sa96-form');
 
     if (! form) {
         return;

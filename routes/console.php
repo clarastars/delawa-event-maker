@@ -12,3 +12,7 @@ Schedule::command('tsepass:sync-activated-balances')
     ->everyThirtyMinutes()
     ->withoutOverlapping()
     ->runInBackground();
+
+Schedule::command('sa96:purge-expired')
+    ->daily()
+    ->withoutOverlapping();

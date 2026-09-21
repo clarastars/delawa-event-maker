@@ -15,12 +15,34 @@ use App\Http\Controllers\Admin\VoucherGenerateController;
 use App\Http\Controllers\Admin\VoucherUploadController;
 use App\Http\Controllers\EventEndedController;
 use App\Http\Controllers\EventInviteController;
+use App\Http\Controllers\Sa96Controller;
 use App\Http\Middleware\EnsureEventIsOpen;
 use App\Http\Middleware\EnsureScannerPinIsVerified;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', EventEndedController::class)->name('home');
+
+Route::prefix('sa96')->name('sa96.')->group(function (): void {
+    Route::get('/', [Sa96Controller::class, 'create'])->name('create');
+    Route::post('/', [Sa96Controller::class, 'store'])
+        ->middleware('throttle:8,1')
+        ->name('store');
+    Route::post('/otp/verify', [Sa96Controller::class, 'verifyOtp'])
+        ->middleware('throttle:6,1')
+        ->name('otp.verify');
+    Route::post('/otp/resend', [Sa96Controller::class, 'resendOtp'])
+        ->middleware('throttle:3,1')
+        ->name('otp.resend');
+    Route::post('/otp/cancel', [Sa96Controller::class, 'cancelOtp'])->name('otp.cancel');
+    Route::get('/thanks', [Sa96Controller::class, 'thanks'])->name('thanks');
+    Route::get('/privacy', [Sa96Controller::class, 'privacy'])->name('privacy');
+    Route::get('/withdraw', [Sa96Controller::class, 'withdraw'])->name('withdraw');
+    Route::post('/withdraw', [Sa96Controller::class, 'destroy'])
+        ->middleware('throttle:5,1')
+        ->name('withdraw.store');
+});
+
 Route::redirect('/accept', '/');
 Route::any('/accept/{any?}', fn () => redirect('/'))->where('any', '.*');
 
