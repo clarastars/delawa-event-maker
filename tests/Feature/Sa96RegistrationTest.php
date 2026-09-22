@@ -212,6 +212,15 @@ test('thanks page requires a completed registration session', function () {
     $this->get('/sa96/thanks')->assertRedirect(route('sa96.create', ['lang' => 'ar']));
 });
 
+test('thanks page shows the cashier message without a withdraw button', function () {
+    $this->withSession(['sa96_registered' => true])
+        ->get('/sa96/thanks')
+        ->assertSuccessful()
+        ->assertSee('أنت معنا!', false)
+        ->assertSee('تقدر الان تظهر هذه الرسالة الى الكاشير و الاستفادة من عروضنا!', false)
+        ->assertDontSee('سحب الموافقة / حذف بياناتي', false);
+});
+
 test('visitor can withdraw consent and personal data is destroyed', function () {
     $registration = Sa96Registration::factory()->create([
         'phone' => '+966551234567',
