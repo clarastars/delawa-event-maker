@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\EventClosureController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ReviewController;
+use App\Http\Controllers\Admin\Sa96RegistrationController;
 use App\Http\Controllers\Admin\ScanController;
 use App\Http\Controllers\Admin\ScanPinController;
 use App\Http\Controllers\Admin\TeamController;
@@ -127,6 +128,9 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
             Route::delete('/contacts/{contact}/vouchers/{voucher}', [ContactController::class, 'unassignVoucher'])->name('contacts.unassign-voucher');
 
             Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews.index');
+
+            Route::get('/sa96', [Sa96RegistrationController::class, 'index'])->name('sa96.index');
+            Route::get('/sa96/export', [Sa96RegistrationController::class, 'export'])->name('sa96.export');
 
             Route::resource('team', TeamController::class)->except(['show']);
         });

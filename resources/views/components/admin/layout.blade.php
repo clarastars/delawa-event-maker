@@ -33,6 +33,7 @@
                             <a href="{{ route('admin.events.index') }}" class="rounded-full bg-white px-4 py-2 text-slate-700 shadow-sm ring-1 ring-slate-200 hover:text-[#4E2E36]">Events</a>
                             <a href="{{ route('admin.vouchers.index') }}" class="rounded-full bg-white px-4 py-2 text-slate-700 shadow-sm ring-1 ring-slate-200 hover:text-[#4E2E36]">Vouchers</a>
                             <a href="{{ route('admin.contacts.index') }}" class="rounded-full bg-white px-4 py-2 text-slate-700 shadow-sm ring-1 ring-slate-200 hover:text-[#4E2E36]">Contacts</a>
+                            <a href="{{ route('admin.sa96.index') }}" class="rounded-full bg-white px-4 py-2 text-slate-700 shadow-sm ring-1 ring-slate-200 hover:text-[#4E2E36]">SA96</a>
                             <a href="{{ route('admin.reviews.index') }}" class="rounded-full bg-white px-4 py-2 text-slate-700 shadow-sm ring-1 ring-slate-200 hover:text-[#4E2E36]">Reviews</a>
                             <a href="{{ route('admin.team.index') }}" class="rounded-full bg-white px-4 py-2 text-slate-700 shadow-sm ring-1 ring-slate-200 hover:text-[#4E2E36]">Team</a>
                         @endif
